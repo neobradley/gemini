@@ -36,16 +36,60 @@
 
         .container {
             display: flex;
-            flex: 1;
+            flex: 1; /* Allows container to grow and fill space */
             margin-top: 20px;
+            padding: 0 20px; /* Horizontal padding for the overall container */
         }
 
+        /* Main content area (iframe) - now on the left */
+        .main-content {
+            flex: 1; /* Takes up the majority of the space */
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        .iframe-container {
+            width: 100%;
+            height: calc(100vh - 180px); /* Original calculation, assumes ~180px for header, footer, and various margins/paddings */
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden; /* Ensures the iframe corners are rounded if iframe itself is not */
+        }
+
+        .iframe-placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.5rem;
+            color: #888;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 5px; /* For browsers that support it on iframes */
+        }
+
+        /* Sidebar (Table of Contents) - now on the right, sticky */
         .sidebar {
-            width: 280px;
+            width: 260px; /* Fixed width for the TOC */
             background-color: #fff;
             padding: 20px;
-            border-right: 1px solid #ddd;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            border-left: 1px solid #ddd; /* Border on the left side */
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05); /* Shadow to its left */
+            
+            position: sticky;
+            top: 20px; /* Stick 20px from the top of the .container's content box */
+                       /* This aligns with .container's margin-top from header */
+            align-self: flex-start; /* Important for sticky behavior in a flex container */
+            max-height: calc(100vh - 180px); /* Match iframe-container's effective height for consistency */
+                                             /* The 180px should account for header, footer, and .container margins/paddings */
+            overflow-y: auto; /* Allows TOC to scroll if its content is too long */
+            margin-left: 15px; /* Gap between iframe area and TOC */
         }
 
         .sidebar h2 {
@@ -81,40 +125,6 @@
             color: white;
         }
 
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            background-color: #fff;
-            margin-left: 10px; /* Small gap */
-            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
-        }
-        
-        .iframe-container {
-            width: 100%;
-            height: calc(100vh - 180px); /* Adjust height based on header/footer */
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            overflow: hidden; /* Ensures the iframe corners are rounded if iframe itself is not */
-        }
-
-        .iframe-placeholder {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            font-size: 1.5rem;
-            color: #888;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 5px; /* For browsers that support it on iframes */
-        }
-
         .footer {
             background-color: #20232a;
             color: #ccc;
@@ -122,9 +132,6 @@
             padding: 1rem;
             font-size: 0.9rem;
             margin-top: auto; /* Pushes footer to the bottom */
-        }
-        .footer p {
-            margin: 0;
         }
     </style>
 </head>
@@ -135,24 +142,23 @@
     </header>
 
     <div class="container">
+        <main class="main-content">
+            <div class="iframe-container" id="iframe-container">
+                <div class="iframe-placeholder" id="iframe-placeholder">
+                    <p>請從右側選擇一個專案來查看。</p> </div>
+                <iframe id="project-iframe" style="display:none;"></iframe>
+            </div>
+        </main>
+
         <aside class="sidebar">
             <h2>專案列表</h2>
             <nav>
                 <ul id="project-list">
                     <li><a href="#" data-src="./sea-safety/index.html">東南亞旅遊安全透視</a></li>
                     <li><a href="#" data-src="./tagaytay-trip/index.html">菲律賓大雅台一日遊行程規劃</a></li>
-                    </ul>
+                </ul>
             </nav>
         </aside>
-
-        <main class="main-content">
-            <div class="iframe-container" id="iframe-container">
-                <div class="iframe-placeholder" id="iframe-placeholder">
-                    <p>請從左側選擇一個專案來查看。</p>
-                </div>
-                <iframe id="project-iframe" style="display:none;"></iframe>
-            </div>
-        </main>
     </div>
 
     <footer class="footer">
@@ -186,6 +192,15 @@
                 });
             });
         });
+    </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QVWCQYFCTH"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-QVWCQYFCTH');
     </script>
 </body>
 </html>
