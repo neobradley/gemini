@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">東南亞旅遊安全透視：最新各國治安評估與建議</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Inter', sans-serif;
+            background-color: #F3F4F6;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 500px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #FF7F50, #FF69B4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .safety-level-excellent { color: #22C55E; }
+        .safety-level-good { color: #84CC16; }
+        .safety-level-above-average { color: #FACC15; }
+        .safety-level-average { color: #F97316; }
+        .safety-level-below-average { color: #EF4444; }
+        .safety-level-poor { color: #B91C1C; }
+
+        .section-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+         .country-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .country-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .tip-item {
+            background-color: #FFFAF0;
+            border-left: 4px solid #FF7F50;
+        }
+        .gemini-button {
+            background-color: #FF69B4;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 0.75rem;
+        }
+        .gemini-button:hover {
+            background-color: #FF7F50;
+        }
+        .loading-indicator {
+            display: none;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #9370DB;
+        }
+        .expanded-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #FBD38D;
+            font-size: 0.9rem;
+            color: #4A5568;
+            line-height: 1.5;
+        }
+        .language-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: -3rem; /* Adjust to position correctly in header */
+            margin-right: 1rem;
+        }
+        .language-button {
+            background-color: #9370DB;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-left: 0.5rem;
+        }
+        .language-button:hover {
+            background-color: #7B68EE;
+        }
+        .language-button.active {
+            background-color: #FF69B4;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl md:text-4xl font-bold gradient-text text-center flex-grow" data-i18n="mainTitle">東南亞旅遊安全透視</h1>
+                <div class="language-toggle">
+                    <button class="language-button active" data-lang="zh-TW">繁體中文</button>
+                    <button class="language-button" data-lang="en">English</button>
+                </div>
+            </div>
+            <p class="text-center text-gray-600 mt-2" data-i18n="subtitle">最新各國治安評估與實用建議</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+
+        <section id="overview" class="mb-12">
+            <h2 class="section-title text-gray-700" data-i18n="sectionTitleOverview">東南亞各國治安評級概覽</h2>
+            <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto" data-i18n="overviewDescription">以下圖表展示了東南亞各國的治安評級情況。評級分數根據報告中的描述性評估轉換而來，分數越高代表治安越好（極佳=5，良好=4，中等偏上=3.5，中等=3，中等偏下=2，較差=1）。</p>
+            <div class="bg-white rounded-lg shadow-xl p-4 md:p-6">
+                <div class="chart-container">
+                    <canvas id="safetyOverviewChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="country-details" class="mb-12">
+            <h2 class="section-title text-gray-700" data-i18n="sectionTitleCountryDetails">各國治安詳情分析</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-teal-600">🇸🇬 <span data-i18n="country_Singapore">新加坡</span> (Singapore)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-excellent" data-i18n="level_excellent">極佳</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Singapore">長期被評為全球最安全國家之一。法律嚴格，執法高效，犯罪率極低。遊客和居民普遍感到非常安全。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-teal-600">🇧🇳 <span data-i18n="country_Brunei">汶萊</span> (Brunei)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-good" data-i18n="level_good">良好</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Brunei">治安狀況良好，犯罪率相對較低。社會穩定，生活水平較高。近期因經濟景氣，治安及吸毒事件略增，但整體仍安全。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-teal-600">�🇳 <span data-i18n="country_Vietnam">越南</span> (Vietnam)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-above-average" data-i18n="level_above_average">中等偏上</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Vietnam">整體安全的旅遊目的地，針對遊客的暴力犯罪極少。但在大城市人多車多處，需留意飛車搶劫和扒竊。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-orange-600">🇹🇭 <span data-i18n="country_Thailand">泰國</span> (Thailand)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-average" data-i18n="level_average">中等</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Thailand">大部分觀光區治安尚可，清邁被評為安全城市之一。南部四府因分離主義活動有暴力事件，建議避免前往。偶有針對遊客的詐騙。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-orange-600">🇲🇾 <span data-i18n="country_Malaysia">馬來西亞</span> (Malaysia)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-average" data-i18n="level_average">中等</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Malaysia">治安狀況複雜，吉隆坡等西馬地區犯罪率相對較高，多為扒竊和搶劫。東馬沙巴地區治安相對較好。基本安全意識重要。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-orange-600">🇮🇩 <span data-i18n="country_Indonesia">印尼</span> (Indonesia)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-average" data-i18n="level_average">中等</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Indonesia">全境治安大致良好，但大城市因外來人口多，治安較差，人潮擁擠處易有扒手。部分地區有宗教衝突或分離主義風險，多自然災害。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-red-600">🇵🇭 <span data-i18n="country_Philippines">菲律賓</span> (Philippines)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-below-average" data-i18n="level_below_average">中等偏下</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Philippines">槍毒、竊盜、搶案等仍偏高。博弈相關綁架案有所聞，呂宋島為熱區。馬尼拉和奎松市犯罪指數較高。建議避免獨自旅行。</p>
+                </div>
+                
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-red-700">🇰🇭 <span data-i18n="country_Cambodia">柬埔寨</span> (Cambodia)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-poor" data-i18n="level_poor">較差</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Cambodia">治安不佳，外交部列為「橙色避免前往」。販毒、搶劫、偷竊、槍擊頻傳。近年多有國人因工作糾紛致人身安全受威脅，尤其涉詐騙園區。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-red-600">🇱🇦 <span data-i18n="country_Laos">寮國</span> (Laos)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-below-average" data-i18n="level_below_average">中等偏下 (部分地區較好)</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Laos">整體相對安全純樸，主要觀光城市較安全。但非觀光區治安不佳。路況與交通安全需注意。外交部列為「橙色避免前往」。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-red-700">🇲🇲 <span data-i18n="country_Myanmar">緬甸</span> (Myanmar)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-poor" data-i18n="level_poor">較差 (政治不穩定)</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_Myanmar">面臨嚴重政治不穩定和武裝衝突，尤其邊境地區。外交部列為「橙色避免前往」。最大安全隱憂來自政治局勢。</p>
+                </div>
+
+                <div class="country-card">
+                    <h3 class="text-2xl font-semibold mb-2 text-red-600">🇹🇱 <span data-i18n="country_TimorLeste">東帝汶</span> (Timor-Leste)</h3>
+                    <p class="mb-1 font-medium" data-i18n="safetyLevel">治安程度：<span class="font-bold safety-level-below-average" data-i18n="level_below_average">中等偏下</span></p>
+                    <p class="text-sm text-gray-700" data-i18n="desc_TimorLeste">整體情勢大致穩定，但因經濟落後，治安仍是隱憂。需注意人身安全及財物保管，避免落單。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="common-concerns" class="mb-12">
+            <h2 class="section-title text-gray-700" data-i18n="sectionTitleCommonConcerns">東南亞常見安全問題</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h4 class="text-xl font-semibold mb-2 text-purple-600" data-i18n="concern_propertyCrimeTitle">⚠️ 財產犯罪</h4>
+                    <p class="text-gray-700" data-i18n="concern_propertyCrimeDesc">扒竊、飛車搶劫在許多觀光區和人潮眾多地點仍屬常見，尤其針對遊客。應隨時保持警惕，妥善保管個人財物。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h4 class="text-xl font-semibold mb-2 text-purple-600" data-i18n="concern_scamsTitle">🚫 詐騙與勒索</h4>
+                    <p class="text-gray-700" data-i18n="concern_scamsDesc">針對遊客的詐騙手法多樣，包括計程車敲詐、景點票務欺詐等。部分地區亦有博弈相關或工作誘騙導致的勒索事件。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h4 class="text-xl font-semibold mb-2 text-purple-600" data-i18n="concern_trafficSafetyTitle">🚦 交通安全</h4>
+                    <p class="text-gray-700" data-i18n="concern_trafficSafetyDesc">許多東南亞國家交通秩序較為混亂，路況不佳或駕駛習慣差異大，交通事故頻率較高。遊客應特別注意交通安全。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h4 class="text-xl font-semibold mb-2 text-purple-600" data-i18n="concern_politicalStabilityTitle">🌍 政治與社會穩定</h4>
+                    <p class="text-gray-700" data-i18n="concern_politicalStabilityDesc">部分國家或地區面臨政治不穩定、內部衝突或分離主義問題，可能對遊客安全構成潛在威脅。應避免前往高風險區域。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="safety-tips">
+            <h2 class="section-title text-gray-700" data-i18n="sectionTitleTips">通用旅遊安全建議</h2>
+            <div class="space-y-4">
+                <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">🛡️</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_moneyTitle" data-tip-title="財不露白">財不露白</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_moneyDesc" data-tip-description="避免佩戴貴重飾品或展示大量現金，以免引起歹徒覬覦。">避免佩戴貴重飾品或展示大量現金，以免引起歹徒覬覦。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-0" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-0" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-0"></div>
+                </div>
+                <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">👀</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_surroundingsTitle" data-tip-title="留意周遭環境">留意周遭環境</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_surroundingsDesc" data-tip-description="尤其在人多擁擠的地方、觀光景點或搭乘大眾運輸時，提高警覺。">尤其在人多擁擠的地方、觀光景點或搭乘大眾運輸時，提高警覺。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-1" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-1" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-1"></div>
+                </div>
+                <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">🌙</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_nightTitle" data-tip-title="避免獨自夜間外出">避免獨自夜間外出</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_nightDesc" data-tip-description="盡量結伴同行，選擇燈光明亮、人潮較多的路線。">盡量結伴同行，選擇燈光明亮、人潮較多的路線。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-2" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-2" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-2"></div>
+                </div>
+                 <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">🚗</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_trafficTitle" data-tip-title="注意交通安全">注意交通安全</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_trafficDesc" data-tip-description="搭乘合法且有信譽的交通工具，過馬路時注意雙向來車。">搭乘合法且有信譽的交通工具，過馬路時注意雙向來車。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-3" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-3" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-3"></div>
+                </div>
+                <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">📄</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_documentsTitle" data-tip-title="保管重要文件">保管重要文件</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_documentsDesc" data-tip-description="護照、簽證等重要文件應有備份，並與正本分開存放。">護照、簽證等重要文件應有備份，並與正本分開存放。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-4" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-4" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-4"></div>
+                </div>
+                <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">⚖️</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_lawsTitle" data-tip-title="了解當地法律與習俗">了解當地法律與習俗</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_lawsDesc" data-tip-description="遵守當地規定，尊重文化差異，避免無意中觸犯禁忌。">遵守當地規定，尊重文化差異，避免無意中觸犯禁忌。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-5" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-5" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-5"></div>
+                </div>
+                <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">➕</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_insuranceTitle" data-tip-title="購買旅遊保險">購買旅遊保險</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_insuranceDesc" data-tip-description="以應對可能的醫療、意外或財物損失等突發狀況。">以應對可能的醫療、意外或財物損失等突發狀況。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-6" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-6" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-6"></div>
+                </div>
+                <div class="tip-item p-4 rounded-md shadow-sm flex flex-col items-start">
+                    <div class="flex items-start w-full">
+                        <span class="text-2xl mr-3 text-orange-500">📢</span>
+                        <div class="flex-grow">
+                            <h4 class="font-semibold text-lg" data-i18n="tip_alertsTitle" data-tip-title="關注外交部旅遊警示">關注外交部旅遊警示</h4>
+                            <p class="text-sm text-gray-600" data-i18n="tip_alertsDesc" data-tip-description="出發前及旅途中，隨時查詢並留意最新的官方旅遊建議和安全警示。">出發前及旅途中，隨時查詢並留意最新的官方旅遊建議和安全警示。</p>
+                        </div>
+                    </div>
+                    <button class="gemini-button mt-4" data-tip-id="tip-7" data-i18n="button_moreAdvice">✨ 獲取更多建議</button>
+                    <p class="loading-indicator" id="loading-7" data-i18n="loadingText">載入中...</p>
+                    <div class="expanded-content" id="expanded-tip-7"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-12 py-8 bg-gray-800 text-white text-center">
+        <p class="text-sm" data-i18n="footerText">&copy; 2024 東南亞旅遊安全資訊分析。僅供參考，實際情況請以官方最新公告為準。</p>
+    </footer>
+
+    <script>
+        let currentLanguage = 'zh-TW';
+
+        const translations = {
+            'zh-TW': {
+                pageTitle: '東南亞旅遊安全透視：最新各國治安評估與建議',
+                mainTitle: '東南亞旅遊安全透視',
+                subtitle: '最新各國治安評估與實用建議',
+                sectionTitleOverview: '東南亞各國治安評級概覽',
+                overviewDescription: '以下圖表展示了東南亞各國的治安評級情況。評級分數根據報告中的描述性評估轉換而來，分數越高代表治安越好（極佳=5，良好=4，中等偏上=3.5，中等=3，中等偏下=2，較差=1）。',
+                sectionTitleCountryDetails: '各國治安詳情分析',
+                country_Singapore: '新加坡',
+                country_Brunei: '汶萊',
+                country_Vietnam: '越南',
+                country_Thailand: '泰國',
+                country_Malaysia: '馬來西亞',
+                country_Indonesia: '印尼',
+                country_Philippines: '菲律賓',
+                country_Cambodia: '柬埔寨',
+                country_Laos: '寮國',
+                country_Myanmar: '緬甸',
+                country_TimorLeste: '東帝汶',
+                safetyLevel: '治安程度：',
+                level_excellent: '極佳',
+                level_good: '良好',
+                level_above_average: '中等偏上',
+                level_average: '中等',
+                level_below_average: '中等偏下',
+                level_poor: '較差',
+                desc_Singapore: '長期被評為全球最安全國家之一。法律嚴格，執法高效，犯罪率極低。遊客和居民普遍感到非常安全。',
+                desc_Brunei: '治安狀況良好，犯罪率相對較低。社會穩定，生活水平較高。近期因經濟景氣，治安及吸毒事件略增，但整體仍安全。',
+                desc_Vietnam: '整體安全的旅遊目的地，針對遊客的暴力犯罪極少。但在大城市人多車多處，需留意飛車搶劫和扒竊。',
+                desc_Thailand: '大部分觀光區治安尚可，清邁被評為安全城市之一。南部四府因分離主義活動有暴力事件，建議避免前往。偶有針對遊客的詐騙。',
+                desc_Malaysia: '治安狀況複雜，吉隆坡等西馬地區犯罪率相對較高，多為扒竊和搶劫。東馬沙巴地區治安相對較好。基本安全意識重要。',
+                desc_Indonesia: '全境治安大致良好，但大城市因外來人口多，治安較差，人潮擁擠處易有扒手。部分地區有宗教衝突或分離主義風險，多自然災害。',
+                desc_Philippines: '槍毒、竊盜、搶案等仍偏高。博弈相關綁架案有所聞，呂宋島為熱區。馬尼拉和奎松市犯罪指數較高。建議避免獨自旅行。',
+                desc_Cambodia: '治安不佳，外交部列為「橙色避免前往」。販毒、搶劫、偷竊、槍擊頻傳。近年多有國人因工作糾紛致人身安全受威脅，尤其涉詐騙園區。',
+                desc_Laos: '整體相對安全純樸，主要觀光城市較安全。但非觀光區治安不佳。路況與交通安全需注意。外交部列為「橙色避免前往」。',
+                desc_Myanmar: '面臨嚴重政治不穩定和武裝衝突，尤其邊境地區。外交部列為「橙色避免前往」。最大安全隱憂來自政治局勢。',
+                desc_TimorLeste: '整體情勢大致穩定，但因經濟落後，治安仍是隱憂。需注意人身安全及財物保管，避免落單。',
+                sectionTitleCommonConcerns: '東南亞常見安全問題',
+                concern_propertyCrimeTitle: '⚠️ 財產犯罪',
+                concern_propertyCrimeDesc: '扒竊、飛車搶劫在許多觀光區和人潮眾多地點仍屬常見，尤其針對遊客。應隨時保持警惕，妥善保管個人財物。',
+                concern_scamsTitle: '🚫 詐騙與勒索',
+                concern_scamsDesc: '針對遊客的詐騙手法多樣，包括計程車敲詐、景點票務欺詐等。部分地區亦有博弈相關或工作誘騙導致的勒索事件。',
+                concern_trafficSafetyTitle: '🚦 交通安全',
+                concern_trafficSafetyDesc: '許多東南亞國家交通秩序較為混亂，路況不佳或駕駛習慣差異大，交通事故頻率較高。遊客應特別注意交通安全。',
+                concern_politicalStabilityTitle: '🌍 政治與社會穩定',
+                concern_politicalStabilityDesc: '部分國家或地區面臨政治不穩定、內部衝突或分離主義問題，可能對遊客安全構成潛在威脅。應避免前往高風險區域。',
+                sectionTitleTips: '通用旅遊安全建議',
+                tip_moneyTitle: '財不露白',
+                tip_moneyDesc: '避免佩戴貴重飾品或展示大量現金，以免引起歹徒覬覦。',
+                tip_surroundingsTitle: '留意周遭環境',
+                tip_surroundingsDesc: '尤其在人多擁擠的地方、觀光景點或搭乘大眾運輸時，提高警覺。',
+                tip_nightTitle: '避免獨自夜間外出',
+                tip_nightDesc: '盡量結伴同行，選擇燈光明亮、人潮較多的路線。',
+                tip_trafficTitle: '注意交通安全',
+                tip_trafficDesc: '搭乘合法且有信譽的交通工具，過馬路時注意雙向來車。',
+                tip_documentsTitle: '保管重要文件',
+                tip_documentsDesc: '護照、簽證等重要文件應有備份，並與正本分開存放。',
+                tip_lawsTitle: '了解當地法律與習俗',
+                tip_lawsDesc: '遵守當地規定，尊重文化差異，避免無意中觸犯禁忌。',
+                tip_insuranceTitle: '購買旅遊保險',
+                tip_insuranceDesc: '以應對可能的醫療、意外或財物損失等突發狀況。',
+                tip_alertsTitle: '關注外交部旅遊警示',
+                tip_alertsDesc: '出發前及旅途中，隨時查詢並留意最新的官方旅遊建議和安全警示。',
+                button_moreAdvice: '✨ 獲取更多建議',
+                button_hideAdvice: '隱藏建議',
+                loadingText: '載入中...',
+                errorFetchingAdvice: '無法獲取更多建議，請稍後再試。',
+                errorNetwork: '載入建議時發生錯誤，請檢查網路連線。',
+                footerText: '© 2024 東南亞旅遊安全資訊分析。僅供參考，實際情況請以官方最新公告為準。',
+                chartLabel: '治安評級分數 (越高越好)',
+                chartXAxisTitle: '治安評級分數'
+            },
+            'en': {
+                pageTitle: 'Southeast Asia Travel Safety Insights: Latest Public Safety Assessment & Tips',
+                mainTitle: 'Southeast Asia Travel Safety Insights',
+                subtitle: 'Latest Public Safety Assessment & Practical Tips',
+                sectionTitleOverview: 'Overview of Public Safety Ratings in Southeast Asian Countries',
+                overviewDescription: 'The chart below shows the public safety ratings for Southeast Asian countries. Ratings are converted from descriptive assessments in the report, with higher scores indicating better public safety (Excellent=5, Good=4, Above Average=3.5, Average=3, Below Average=2, Poor=1).',
+                sectionTitleCountryDetails: 'Detailed Public Safety Analysis by Country',
+                country_Singapore: 'Singapore',
+                country_Brunei: 'Brunei',
+                country_Vietnam: 'Vietnam',
+                country_Thailand: 'Thailand',
+                country_Malaysia: 'Malaysia',
+                country_Indonesia: 'Indonesia',
+                country_Philippines: 'Philippines',
+                country_Cambodia: 'Cambodia',
+                country_Laos: 'Laos',
+                country_Myanmar: 'Myanmar',
+                country_TimorLeste: 'Timor-Leste',
+                safetyLevel: 'Safety Level: ',
+                level_excellent: 'Excellent',
+                level_good: 'Good',
+                level_above_average: 'Above Average',
+                level_average: 'Average',
+                level_below_average: 'Below Average',
+                level_poor: 'Poor',
+                desc_Singapore: 'Consistently ranked as one of the safest countries globally. Strict laws, efficient enforcement, and very low crime rates. Tourists and residents generally feel very safe.',
+                desc_Brunei: 'Public safety is generally good with relatively low crime rates. Stable society and high living standards. Recently, due to economic downturn, minor increases in crime and drug incidents, but overall still safe.',
+                desc_Vietnam: 'Overall a safe travel destination with very few violent crimes targeting tourists. However, in crowded cities with heavy traffic, like Hanoi and Ho Chi Minh City, snatch thefts and pickpocketing can occur.',
+                desc_Thailand: 'Public safety in most tourist areas (e.g., Bangkok, Chiang Mai) is generally good. Chiang Mai is even rated as one of the safest cities in Southeast Asia. Southern four provinces have separatist activities and violence, advised to avoid. Occasional tourist scams.',
+                desc_Malaysia: 'Public safety situation is complex. Kuala Lumpur and other West Malaysian regions have relatively higher crime rates, mostly property crimes like pickpocketing and robbery. East Malaysia (Sabah) is generally safer with more friendly locals. Basic safety awareness is crucial.',
+                desc_Indonesia: 'Overall public safety is generally good, but large cities like Jakarta and Surabaya have higher crime rates due to large influx of population, with pickpocketing common in crowded areas. Some regions have risks of religious conflict or separatism, and frequent natural disasters.',
+                desc_Philippines: 'Crime data shows a gradual decline, but gun violence, theft, assault, rape, and robbery remain high. Kidnappings related to gambling are known, with Luzon being a hotspot. Manila and Quezon City have higher crime indices. Advised to avoid solo travel.',
+                desc_Cambodia: 'Public safety is poor; Ministry of Foreign Affairs advises "orange warning" (avoid non-essential travel). Drug trafficking, robbery, theft, shootings, and traffic accidents are common. Recent cases of foreign nationals facing threats due to work disputes, especially in scam compounds.',
+                desc_Laos: 'Overall a relatively safe and simple country. Major tourist cities are safer. However, outside major cities, public safety is poor. Road conditions and traffic safety also require attention. Ministry of Foreign Affairs advises "orange warning".',
+                desc_Myanmar: 'Faces severe political instability and armed conflict, especially in border areas. Ministry of Foreign Affairs advises "orange warning". The biggest safety concern comes from the political situation.',
+                desc_TimorLeste: 'Overall situation is generally stable, but due to economic underdevelopment, public safety remains a concern. Travelers should be aware of personal safety and protect belongings, avoid being alone.',
+                sectionTitleCommonConcerns: 'Common Safety Concerns in Southeast Asia',
+                concern_propertyCrimeTitle: '⚠️ Property Crime',
+                concern_propertyCrimeDesc: 'Pickpocketing and snatch theft are common in many tourist areas and crowded places, especially targeting tourists. Always stay vigilant and keep personal belongings secure.',
+                concern_scamsTitle: '🚫 Scams & Extortion',
+                concern_scamsDesc: 'Various scams target tourists, including taxi overcharging and ticket fraud at attractions. Some areas also have extortion incidents related to gambling or job scams.',
+                concern_trafficSafetyTitle: '🚦 Traffic Safety',
+                concern_trafficSafetyDesc: 'Traffic in many Southeast Asian countries can be chaotic, with poor road conditions or different driving habits, leading to higher accident rates. Tourists should pay special attention to traffic safety.',
+                concern_politicalStabilityTitle: '🌍 Political & Social Stability',
+                concern_politicalStabilityDesc: 'Some countries or regions face political instability, internal conflicts, or separatist issues, which may pose potential threats to tourist safety. Avoid high-risk areas.',
+                sectionTitleTips: 'General Travel Safety Tips',
+                tip_moneyTitle: 'Avoid Displaying Valuables',
+                tip_moneyDesc: 'Avoid wearing expensive jewelry or showing large amounts of cash, to prevent attracting criminals.',
+                tip_surroundingsTitle: 'Be Aware of Your Surroundings',
+                tip_surroundingsDesc: 'Especially in crowded places, tourist attractions, or when using public transport, stay vigilant.',
+                tip_nightTitle: 'Avoid Going Out Alone at Night',
+                tip_nightDesc: 'Try to go out with companions and choose well-lit, busy routes.',
+                tip_trafficTitle: 'Pay Attention to Traffic Safety',
+                tip_trafficDesc: 'Use legitimate and reputable transportation. When crossing roads, be aware of traffic from both directions.',
+                tip_documentsTitle: 'Safeguard Important Documents',
+                tip_documentsDesc: 'Passports, visas, and other important documents should have backups and be stored separately from the originals.',
+                tip_lawsTitle: 'Understand Local Laws & Customs',
+                tip_lawsDesc: 'Abide by local regulations, respect cultural differences, and avoid inadvertently offending.',
+                tip_insuranceTitle: 'Purchase Travel Insurance',
+                tip_insuranceDesc: 'To cover potential medical emergencies, accidents, or loss of belongings during your trip.',
+                tip_alertsTitle: 'Monitor Ministry of Foreign Affairs Travel Advisories',
+                tip_alertsDesc: 'Before and during your trip, always check for and pay attention to the latest official travel advice and safety alerts.',
+                button_moreAdvice: '✨ Get More Tips',
+                button_hideAdvice: 'Hide Tips',
+                loadingText: 'Loading...',
+                errorFetchingAdvice: 'Could not fetch more tips, please try again later.',
+                errorNetwork: 'Error loading tips, please check your network connection.',
+                footerText: '© 2024 Southeast Asia Travel Safety Analysis. For reference only, actual situations may vary. Please refer to official announcements for the latest information.'
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.title = translations[lang].pageTitle;
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.dataset.i18n;
+                if (translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            // Update specific elements that are not directly data-i18n
+            document.querySelector('[data-i18n="safetyLevel"]').innerHTML = translations[lang].safetyLevel + `<span class="font-bold safety-level-excellent" data-i18n="level_excellent">${translations[lang].level_excellent}</span>`;
+            // Update safety levels for all country cards
+            document.querySelectorAll('.country-card').forEach(card => {
+                const levelSpan = card.querySelector('.safety-level-excellent, .safety-level-good, .safety-level-above-average, .safety-level-average, .safety-level-below-average, .safety-level-poor');
+                if (levelSpan) {
+                    const levelKey = levelSpan.dataset.i18n;
+                    levelSpan.textContent = translations[lang][levelKey];
+                    card.querySelector('[data-i18n="safetyLevel"]').childNodes[0].nodeValue = translations[lang].safetyLevel;
+                }
+            });
+
+            // Update button texts
+            document.querySelectorAll('.gemini-button').forEach(button => {
+                if (button.textContent.includes('獲取更多建議') || button.textContent.includes('Get More Tips')) {
+                    button.textContent = translations[lang].button_moreAdvice;
+                } else if (button.textContent.includes('隱藏建議') || button.textContent.includes('Hide Tips')) {
+                    button.textContent = translations[lang].button_hideAdvice;
+                }
+            });
+
+            // Update loading indicator texts
+            document.querySelectorAll('.loading-indicator').forEach(indicator => {
+                indicator.textContent = translations[lang].loadingText;
+            });
+
+            // Update chart labels and titles
+            updateChartLanguage();
+
+            // Update active language button
+            document.querySelectorAll('.language-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.lang === lang) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const safetyData = [
+            { country: '新加坡', score: 5, level: '極佳', country_en: 'Singapore', level_en: 'Excellent' },
+            { country: '汶萊', score: 4, level: '良好', country_en: 'Brunei', level_en: 'Good' },
+            { country: '越南', score: 3.5, level: '中等偏上', country_en: 'Vietnam', level_en: 'Above Average' },
+            { country: '泰國', score: 3, level: '中等', country_en: 'Thailand', level_en: 'Average' },
+            { country: '馬來西亞', score: 3, level: '中等', country_en: 'Malaysia', level_en: 'Average' },
+            { country: '印尼', score: 3, level: '中等', country_en: 'Indonesia', level_en: 'Average' },
+            { country: '菲律賓', score: 2, level: '中等偏下', country_en: 'Philippines', level_en: 'Below Average' },
+            { country: '寮國', score: 2, level: '中等偏下', country_en: 'Laos', level_en: 'Below Average' },
+            { country: '東帝汶', score: 2, level: '中等偏下', country_en: 'Timor-Leste', level_en: 'Below Average' },
+            { country: '柬埔寨', score: 1, level: '較差', country_en: 'Cambodia', level_en: 'Poor' },
+            { country: '緬甸', score: 1, level: '較差', country_en: 'Myanmar', level_en: 'Poor' }
+        ];
+
+        safetyData.sort((a, b) => b.score - a.score);
+
+        let myChart; // Declare chart globally
+
+        function updateChartLanguage() {
+            if (myChart) {
+                const newLabels = safetyData.map(item => {
+                    const label = currentLanguage === 'zh-TW' ? item.country : item.country_en;
+                    if (label.length > 16) {
+                        let words = label.split(' ');
+                        let lines = [];
+                        let currentLine = "";
+                        for(let word of words) {
+                            if ((currentLine + (currentLine === "" ? "" : " ") + word).length > 16 && currentLine.length > 0) {
+                                lines.push(currentLine);
+                                currentLine = word;
+                            } else {
+                                currentLine += (currentLine === "" ? "" : " ") + word;
+                            }
+                        }
+                        lines.push(currentLine);
+                        return lines;
+                    }
+                    return label;
+                });
+
+                myChart.data.labels = newLabels;
+                myChart.options.plugins.tooltip.callbacks.title = function(tooltipItems) {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    if (Array.isArray(label)) {
+                      return label.join(' ');
+                    } else {
+                      return label;
+                    }
+                };
+                myChart.options.plugins.tooltip.callbacks.label = function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed.x !== null) {
+                        const countryData = safetyData.find(d => {
+                            const currentLabel = Array.isArray(context.label) ? context.label.join(' ') : context.label;
+                            return (currentLanguage === 'zh-TW' ? d.country : d.country_en) === currentLabel;
+                        });
+                        label += context.parsed.x + ' (' + (currentLanguage === 'zh-TW' ? countryData?.level : countryData?.level_en) + ')';
+                    }
+                    return label;
+                };
+                myChart.options.scales.x.title.text = translations[currentLanguage].chartXAxisTitle;
+                myChart.data.datasets[0].label = translations[currentLanguage].chartLabel;
+                myChart.update();
+            }
+        }
+        
+        const assignColor = (score) => {
+            if (score >= 5) return '#22C55E';
+            if (score >= 4) return '#84CC16';
+            if (score >= 3.5) return '#FACC15';
+            if (score >= 3) return '#F97316';
+            if (score >= 2) return '#EF4444';
+            return '#B91C1C';
+        };
+        const backgroundColors = safetyData.map(item => assignColor(item.score));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const overviewCtx = document.getElementById('safetyOverviewChart').getContext('2d');
+            myChart = new Chart(overviewCtx, {
+                type: 'bar',
+                data: {
+                    labels: safetyData.map(item => item.country), // Initial labels in Chinese
+                    datasets: [{
+                        label: translations[currentLanguage].chartLabel,
+                        data: safetyData.map(item => item.score),
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace(')', ', 0.8)').replace('rgb', 'rgba')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 5,
+                            title: {
+                                display: true,
+                                text: translations[currentLanguage].chartXAxisTitle,
+                                font: { size: 14, family: "'Noto Sans TC', sans-serif" }
+                            },
+                            ticks: {
+                                 font: { family: "'Noto Sans TC', sans-serif" }
+                            }
+                        },
+                        y: {
+                           ticks: {
+                               autoSkip: false,
+                               font: { family: "'Noto Sans TC', sans-serif" }
+                           }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                 font: { family: "'Noto Sans TC', sans-serif" }
+                            }
+                        },
+                        tooltip: {
+                            titleFont: { family: "'Noto Sans TC', sans-serif" },
+                            bodyFont: { family: "'Noto Sans TC', sans-serif" },
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const item = tooltipItems[0];
+                                    let label = item.chart.data.labels[item.dataIndex];
+                                    if (Array.isArray(label)) {
+                                      return label.join(' ');
+                                    } else {
+                                      return label;
+                                    }
+                                },
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        const countryData = safetyData.find(d => {
+                                            const currentLabel = Array.isArray(context.label) ? context.label.join(' ') : context.label;
+                                            return (currentLanguage === 'zh-TW' ? d.country : d.country_en) === currentLabel;
+                                        });
+                                        label += context.parsed.x + ' (' + (currentLanguage === 'zh-TW' ? countryData?.level : countryData?.level_en) + ')';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Initial language setup
+            setLanguage(currentLanguage);
+
+            document.querySelectorAll('.language-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    setLanguage(button.dataset.lang);
+                });
+            });
+        });
+
+
+        const geminiButtons = document.querySelectorAll('.gemini-button');
+        geminiButtons.forEach(button => {
+            button.addEventListener('click', async () => {
+                const tipId = button.dataset.tipId;
+                const tipTitle = button.closest('.tip-item').querySelector('[data-tip-title]').dataset.tipTitle;
+                const tipDescription = button.closest('.tip-item').querySelector('[data-tip-description]').dataset.tipDescription;
+                const loadingIndicator = document.getElementById(`loading-${tipId.split('-')[1]}`);
+                const expandedContentDiv = document.getElementById(`expanded-tip-${tipId.split('-')[1]}`);
+
+                if (expandedContentDiv.style.display === 'block') {
+                    expandedContentDiv.style.display = 'none';
+                    button.textContent = translations[currentLanguage].button_moreAdvice;
+                    return;
+                }
+
+                expandedContentDiv.innerHTML = '';
+                loadingIndicator.style.display = 'block';
+                button.disabled = true;
+
+                try {
+                    let chatHistory = [];
+                    const prompt = currentLanguage === 'zh-TW' ?
+                        `請為以下旅遊安全建議提供更詳細的解釋和具體做法，並以繁體中文呈現：\n\n建議標題: ${tipTitle}\n建議內容: ${tipDescription}\n\n請提供約100-150字的詳細建議。` :
+                        `Please provide a more detailed explanation and specific actions for the following travel safety tip, presented in English:\n\nTip Title: ${tipTitle}\nTip Content: ${tipDescription}\n\nPlease provide about 100-150 words of detailed advice.`;
+
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "AIzaSyAmEoKZKSU6qaRNl_K5_9BU4TMAb7OzP1Q";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        expandedContentDiv.innerHTML = `<p>${text}</p>`;
+                        expandedContentDiv.style.display = 'block';
+                        button.textContent = translations[currentLanguage].button_hideAdvice;
+                    } else {
+                        expandedContentDiv.innerHTML = `<p>${translations[currentLanguage].errorFetchingAdvice}</p>`;
+                        expandedContentDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error fetching Gemini API:', error);
+                    expandedContentDiv.innerHTML = `<p>${translations[currentLanguage].errorNetwork}</p>`;
+                    expandedContentDiv.style.display = 'block';
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                    button.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+�
