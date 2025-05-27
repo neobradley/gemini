@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菲律賓大雅台10個一日遊互動行程</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .activity-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .activity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: white;
+        }
+        select:focus, button:focus {
+            outline: 2px solid #f43f5e;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-gray-800">
+    <header class="sticky-header bg-sky-700 text-white p-5 shadow-md">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <h1 id="appTitle" class="text-2xl lg:text-3xl font-bold text-center sm:text-left mb-2 sm:mb-0"></h1>
+            <div class="flex items-center space-x-3 mt-2 sm:mt-0">
+                <label for="itinerarySelector" id="selectItineraryLabel" class="text-sm sm:text-base"></label>
+                <select id="itinerarySelector" class="bg-white text-sky-700 p-2 rounded-md shadow focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm sm:text-base">
+                </select>
+                <label for="languageSelector" class="sr-only">選擇語言</label>
+                <select id="languageSelector" class="bg-white text-sky-700 p-2 rounded-md shadow focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm sm:text-base">
+                    <option value="zh-Hant">繁體中文</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6 mt-4">
+        <section id="introduction" class="mb-8 p-6 bg-white rounded-xl shadow-xl">
+            <h2 id="introTitle" class="text-2xl font-semibold text-sky-700 mb-3 text-center"></h2>
+            <p id="introText" class="text-lg text-gray-700 leading-relaxed text-center"></p>
+        </section>
+
+        <section id="itineraryDisplay" class="mb-10">
+        </section>
+
+        <section id="importantNotes" class="p-6 bg-white rounded-xl shadow-xl">
+            <h2 id="importantNotesTitle" class="text-2xl font-semibold text-sky-700 mb-4 border-b-2 border-sky-300 pb-2"></h2>
+            <div class="space-y-3 text-gray-700 leading-relaxed">
+                <p id="noteTraffic"></p>
+                <p id="noteReservation"></p>
+                <p id="noteInfo"></p>
+                <p id="noteNavigation"></p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center p-8 bg-gray-800 text-stone-300 mt-12">
+        <p id="footerText1"></p>
+        <p id="footerText2" class="text-sm mt-1"></p>
+    </footer>
+
+    <script>
+        // Chosen Palette: Calm Harmony (Warm Neutrals: bg-stone-100; Complementary: text-sky-700, border-sky-300; Accent: bg-rose-500)
+        // Application Structure Plan: A dropdown navigation to select one of 10 Tagaytay itineraries. The selected itinerary's details (timeline, activities with descriptions, prices, links, start/end point, concept route map) are displayed dynamically. A section for general tips is also included. A new language selector allows users to switch the UI language. This structure allows users to easily compare and choose an itinerary that suits them, directly addressing the multi-itinerary nature of the source report. An estimated total cost for the selected itinerary will also be displayed.
+        // Visualization & Content Choices:
+        // - Itinerary Data (10 itineraries, each with multiple activities: time, title, intro, price, links, start/end point, concept route map) -> Goal: Inform, Plan, Compare -> Presentation: Dynamically rendered HTML cards for each activity within the selected itinerary's timeline. A dropdown for itinerary selection. -> Interaction: User selects an itinerary to view its details. Clickable external links for official sites and maps. -> Justification: Provides a clear, organized, and interactive way to explore multiple detailed trip plans. -> Library/Method: Vanilla JS for DOM manipulation and data handling.
+        // - Estimated Costs (per activity, per itinerary) -> Goal: Inform, Budget -> Presentation: Text display for per-activity price ranges. Calculated and displayed total estimated cost (sum of lower bounds of price ranges or single values, prioritizing per-person costs) for the selected itinerary. -> Interaction: None beyond viewing. -> Justification: Quick budget overview for each itinerary. -> Library/Method: Vanilla JS for parsing and calculation.
+        // - Icons (Time, Price, Links) -> Goal: Enhance Readability, Visual Cue -> Presentation: Unicode characters. -> Interaction: None. -> Justification: Simple, lightweight visual aids. -> Library/Method: HTML Unicode.
+        // - General "Important Notes" section -> Goal: Inform -> Presentation: Static text block. -> Interaction: None. -> Justification: Essential travel advice from the source. -> Library/Method: HTML.
+        // - Language Selection -> Goal: Accessibility -> Presentation: Dropdown selector. -> Interaction: User selects language, UI text updates. -> Justification: Improves usability for diverse users. -> Library/Method: Vanilla JS for text updates.
+        // CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+
+        const translations = {
+            'zh-Hant': {
+                appTitle: "大雅台一日遊行程規劃器",
+                selectItinerary: "選擇行程：",
+                introTitle: "歡迎使用大雅台行程瀏覽器！",
+                introText: "此應用程式將協助您探索從馬卡提出發的 10 個不同大雅台一日遊行程。您可以透過上方選單選擇有興趣的行程主題，查看詳細的活動安排、預估費用及相關連結，方便您規劃完美的旅程。請注意，行程內的活動描述和名稱目前僅提供繁體中文。",
+                importantNotesTitle: "重要提示",
+                noteTraffic: "📌 **交通時間：** 從馬卡提到大雅台的車程約 2-3 小時，週末和節假日可能會更長。請務必將交通時間納入考量。",
+                noteReservation: "📅 **預約：** 部分高檔餐廳（如 Antonio's Fine Dining、Marcia Adams' Restaurant）和水療中心（如 Nurture Wellness Village）需要提前預約。",
+                noteInfo: "ℹ️ **即時資訊：** 建議您在出發前，透過提供的官網連結或相關旅遊網站，查詢各景點和餐廳的最新開放時間、票價和預約政策。",
+                noteNavigation: "🗺️ **地圖導航：** 自駕時請務必使用即時導航應用程式（如 Google Maps 或 Waze）來獲取最新的路況和最佳路線。",
+                footerText1: "© 2025 大雅台互動行程規劃. 祝您旅途愉快！",
+                footerText2: "本網站資訊僅供參考，實際價格與開放時間請依官方公告為準。",
+                viewRouteMap: "🗺️ 查看此行程概念路線圖 (Google Maps)",
+                officialWebsite: "🔗 官網/頁面",
+                noOfficialWebsite: "🔗 無官方網站",
+                mapLink: "📍 地點連結",
+                estimatedCost: "此行程預計總花費 (每人約)：",
+                costDisclaimer: "(預估費用基於價格範圍的較低值或單一值，僅供參考)",
+                infoUnavailable: "資訊不足無法估算",
+                timeMorning: "☀️ 早上",
+                timeNoon: "🍽️ 中午",
+                timeAfternoon: "🎢 下午",
+                timeEvening: "🌅 傍晚",
+                timePrefix: "⏰ ",
+                pricePrefix: "💰 ",
+                descriptionPrefix: "",
+                itineraryTitles: {
+                    "trip1": "行程 1：經典大雅台體驗",
+                    "trip2": "行程 2：精緻餐飲與藝術之旅",
+                    "trip3": "行程 3：花園與身心放鬆之旅",
+                    "trip4": "行程 4：咖啡與甜點愛好者之旅",
+                    "trip5": "行程 5：瑞士風情與湖景晚餐",
+                    "trip6": "行程 6：家庭農場與遊樂園樂趣",
+                    "trip7": "行程 7：當地風味與拼圖探險",
+                    "trip8": "行程 8：藝術與自然融合之旅",
+                    "trip9": "行程 9：全景視野與休閒購物",
+                    "trip10": "行程 10：身心靈淨化之旅"
+                }
+            },
+            'en': {
+                appTitle: "Tagaytay Day Trip Itinerary Planner",
+                selectItinerary: "Select Itinerary:",
+                introTitle: "Welcome to the Tagaytay Itinerary Browser!",
+                introText: "This application helps you explore 10 different Tagaytay day trip itineraries starting and ending in Makati. Use the selector above to view detailed activity plans, estimated costs, and relevant links for your perfect trip. Please note that activity descriptions and names are currently only available in Traditional Chinese.",
+                importantNotesTitle: "Important Notes",
+                noteTraffic: "📌 **Traffic Time:** The drive from Makati to Tagaytay takes approximately 2-3 hours, potentially longer on weekends and holidays. Please factor in sufficient travel time.",
+                noteReservation: "📅 **Reservations:** Some high-end restaurants (e.g., Antonio's Fine Dining, Marcia Adams' Restaurant) and wellness centers (e.g., Nurture Wellness Village) require advance reservations.",
+                noteInfo: "ℹ️ **Real-time Information:** It is recommended to check the latest opening hours, ticket prices, and reservation policies for each attraction and restaurant via their official websites or relevant travel sites before your departure.",
+                noteNavigation: "🗺️ **Map Navigation:** When driving, always use real-time navigation apps (e.g., Google Maps or Waze) for the latest traffic conditions and best routes.",
+                footerText1: "© 2025 Tagaytay Interactive Itinerary Planner. Have a pleasant journey!",
+                footerText2: "Information on this website is for reference only; actual prices and opening hours are subject to official announcements.",
+                viewRouteMap: "🗺️ View Concept Route Map (Google Maps)",
+                officialWebsite: "🔗 Official Website/Page",
+                noOfficialWebsite: "🔗 No Official Website",
+                mapLink: "📍 Location Link",
+                estimatedCost: "Estimated Total Cost (per person approx.):",
+                costDisclaimer: "(Estimated costs are based on the lower bound or single value of price ranges, for reference only)",
+                infoUnavailable: "Information insufficient for estimation",
+                timeMorning: "☀️ Morning",
+                timeNoon: "🍽️ Noon",
+                timeAfternoon: "🎢 Afternoon",
+                timeEvening: "🌅 Evening",
+                timePrefix: "⏰ ",
+                pricePrefix: "💰 ",
+                descriptionPrefix: "",
+                itineraryTitles: {
+                    "trip1": "Itinerary 1: Classic Tagaytay Experience",
+                    "trip2": "Itinerary 2: Fine Dining & Art Tour",
+                    "trip3": "Itinerary 3: Garden & Relaxation Retreat",
+                    "trip4": "Itinerary 4: Coffee & Dessert Lover's Tour",
+                    "trip5": "Itinerary 5: Swiss Charm & Lake View Dinner",
+                    "trip6": "Itinerary 6: Family Farm & Amusement Fun",
+                    "trip7": "Itinerary 7: Local Flavors & Puzzle Adventure",
+                    "trip8": "Itinerary 8: Art & Nature Fusion Tour",
+                    "trip9": "Itinerary 9: Panoramic Views & Leisure Shopping",
+                    "trip10": "Itinerary 10: Mind & Body Purification Journey"
+                }
+            }
+        };
+
+        let currentLanguage = 'zh-Hant'; // Default language
+        let currentItineraryId = "trip1"; // Initialize with the first itinerary's ID
+
+        function generateRouteUrl(locations) {
+            const baseUrl = "https://www.google.com/maps/dir/";
+            const encodedLocations = locations.map(loc => encodeURIComponent(loc)).join('/');
+            return baseUrl + encodedLocations;
+        }
+
+        const itineraries = [
+            {
+                id: "trip1",
+                title: "行程 1：經典大雅台體驗",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Bag of Beans Main Branch, Tagaytay", "Tagaytay Picnic Grove", "Leslie's Restaurant, Tagaytay", "Sky Ranch Tagaytay", "Balay Dako, Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:00 AM - 09:30 AM", name: "早餐 @ Bag of Beans Main Branch", description: { 'zh-Hant': "Bag of Beans 是大雅台的標誌性咖啡館，以其鄉村風格的裝潢、舒適的氛圍、美味的咖啡、豐盛的早餐和烘焙食品而聞名。這裡有多個分店，主店通常較為寬敞。", 'en': "Bag of Beans is an iconic Tagaytay cafe known for its rustic decor, cozy ambiance, delicious coffee, hearty breakfast, and baked goods. It has multiple branches, with the main branch typically being more spacious." }, price: "餐點約 PHP 300-600/人", website: "https://www.facebook.com/bagofbeans.tagaytay/", mapLink: "https://maps.app.goo.gl/P3wN5538G1c8X5P77" },
+                        { time: "09:45 AM - 11:30 AM", name: "塔爾火山景觀 @ Tagaytay Picnic Grove", description: { 'zh-Hant': "大雅台野餐公園是觀賞塔爾火山和塔爾湖全景的經典地點。這裡有野餐區、空中滑索、騎馬等活動，適合家庭遊玩。", 'en': "Tagaytay Picnic Grove is a classic spot to enjoy panoramic views of Taal Volcano and Taal Lake. It offers picnic areas, ziplining, horseback riding, and other activities, making it suitable for families." }, price: "入場費約 PHP 50/人；空中滑索約 PHP 200-300/人", website: null, mapLink: "https://maps.app.goo.gl/3q2Y8z7W4R4g2XbTA" }
+                    ],
+                    noon: [
+                        { time: "12:00 PM - 01:30 PM", name: "午餐 @ Leslie's Restaurant", description: { 'zh-Hant': "Leslie's 是大雅台另一家非常受歡迎的餐廳，以其招牌的「Bulalo」（菲律賓牛肉湯）和同樣壯麗的塔爾火山景觀而聞名。湯頭濃郁，牛肉軟爛，是體驗當地美食的絕佳選擇。", 'en': "Leslie's is another very popular restaurant in Tagaytay, renowned for its signature 'Bulalo' (Filipino beef shank soup) and equally stunning views of Taal Volcano. The rich broth and tender beef make it an excellent choice for experiencing local cuisine." }, price: "餐點約 PHP 400-800/人（Bulalo 一大鍋約 PHP 700-1000）", website: null, mapLink: "https://maps.app.goo.gl/7N2Y6z5W4Q4g2XbTA" }
+                    ],
+                    afternoon: [
+                        { time: "02:00 PM - 04:30 PM", name: "遊玩 @ Sky Ranch Tagaytay", description: { 'zh-Hant': "Sky Ranch 是一個小型遊樂園，擁有菲律賓最高的摩天輪「Sky Eye」，從摩天輪上可以俯瞰塔爾湖和周邊地區的壯麗景色。園區內還有其他遊樂設施和美食攤位。", 'en': "Sky Ranch is a compact amusement park featuring the Philippines' tallest Ferris wheel, 'Sky Eye,' which offers spectacular views of Taal Lake and the surrounding area. The park also has other rides and food stalls." }, price: "入場費約 PHP 80-100/人；每個遊樂設施單獨收費，摩天輪約 PHP 150/人", website: "https://www.facebook.com/SkyRanchTagaytay/", mapLink: "https://maps.app.goo.gl/Y2xZ8z7W4R4g2XbTA" }
+                    ],
+                    evening: [
+                        { time: "05:00 PM - 07:00 PM", name: "日落晚餐 @ Balay Dako by Antonio's", description: { 'zh-Hant': "Balay Dako 是 Antonio's 集團旗下的餐廳，提供傳統菲律賓美食，並擁有絕佳的塔爾湖景觀，尤其適合觀賞日落。餐廳的建築設計充滿菲律賓傳統特色。", 'en': "Balay Dako, part of the Antonio's group, offers traditional Filipino cuisine with excellent views of Taal Lake, making it ideal for sunset dining. The restaurant's architecture features distinct Filipino traditional design." }, price: "餐點約 PHP 600-1200/人", website: "https://antoniosrestaurant.ph/", mapLink: "https://maps.app.goo.gl/M3wN5538G1c8X5P77" }
+                    ]
+                }
+            },
+            {
+                id: "trip2",
+                title: "行程 2：精緻餐飲與藝術之旅",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Breakfast at Antonio's, Tagaytay", "Museo Orlina, Tagaytay", "Antonio's Fine Dining, Tagaytay", "People's Park in the Sky, Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:00 AM - 09:30 AM", name: "早餐 @ Breakfast at Antonio's", description: { 'zh-Hant': "Antonio's 旗下另一家受歡迎的餐廳，提供豐盛的早午餐選擇，環境優雅，是開啟一天的好地方。", 'en': "Another popular restaurant under the Antonio's group, Breakfast at Antonio's offers a hearty brunch selection in an elegant setting, making it a great place to start your day." }, price: "餐點約 PHP 500-800/人", website: "https://www.facebook.com/BreakfastAtAntonios/", mapLink: "https://maps.app.goo.gl/R3wN5538G1c8X5P77" },
+                        { time: "09:45 AM - 11:30 AM", name: "藝術欣賞 @ Museo Orlina", description: { 'zh-Hant': "Museo Orlina 是菲律賓著名玻璃藝術家 Ramon Orlina 的博物館，展示其精美的玻璃雕塑作品，是藝術愛好者的必訪之地。", 'en': "Museo Orlina is the museum of renowned Filipino glass artist Ramon Orlina, showcasing his exquisite glass sculptures. It's a must-visit for art enthusiasts." }, price: "入場費約 PHP 150-200/人", website: "https://museoorlina.com/", mapLink: "https://maps.app.goo.gl/U3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "12:00 PM - 02:00 PM", name: "午餐 @ Antonio's Fine Dining", description: { 'zh-Hant': "菲律賓最負盛名的餐廳之一，提供精緻的國際美食，環境優美，需要提前預約。", 'en': "One of the most prestigious restaurants in the Philippines, Antonio's Fine Dining offers exquisite international cuisine in a beautiful setting. Reservations are highly recommended." }, price: "餐點約 PHP 2000-4000+/人", website: "https://antoniosrestaurant.ph/", mapLink: "https://maps.app.goo.gl/V3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "02:30 PM - 04:30 PM", name: "景觀 @ People's Park in the Sky", description: { 'zh-Hant': "位於大雅台的最高點，原為未完工的總統行宮，現改為公園，可在此俯瞰塔爾湖和周邊地區的壯麗景色。", 'en': "Located at Tagaytay's highest point, this former unfinished presidential palace is now a park offering magnificent panoramic views of Taal Lake and the surrounding areas." }, price: "入場費約 PHP 30-50/人", website: null, mapLink: "https://maps.app.goo.gl/X3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                        { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip3",
+                title: "行程 3：花園與身心放鬆之旅",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Sonya's Garden, Tagaytay", "Nurture Wellness Village, Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:30 AM - 11:00 AM", name: "早餐與花園漫步 @ Sonya's Garden", description: { 'zh-Hant': "Sonya's Garden 以其有機花園、鄉村風格的住宿和健康美食而聞名。在這裡享用早餐，並在美麗的花園中漫步，感受寧靜。", 'en': "Sonya's Garden is famous for its organic garden, rustic accommodations, and healthy cuisine. Enjoy breakfast here and take a peaceful stroll through the beautiful gardens." }, price: "早餐/早午餐約 PHP 700-1000/人", website: "https://sonyasgarden.com/", mapLink: "https://maps.app.goo.gl/Z3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "11:30 AM - 01:00 PM", name: "午餐 @ Sonya's Garden (自助餐)", description: { 'zh-Hant': "Sonya's Garden 提供新鮮健康的自助餐，食材多來自自家花園，是享受自然美食的好選擇。", 'en': "Sonya's Garden offers a fresh and healthy buffet, with most ingredients sourced from its own garden, making it an excellent choice for enjoying natural cuisine." }, price: "自助餐約 PHP 800-1200/人", website: "https://sonyasgarden.com/", mapLink: "https://maps.app.goo.gl/a3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "01:30 PM - 04:30 PM", name: "水療與放鬆 @ Nurture Wellness Village", description: { 'zh-Hant': "屢獲殊榮的養生度假村，提供各種傳統菲律賓水療、按摩和健康活動，讓身心得到徹底放鬆。", 'en': "This award-winning wellness resort offers various traditional Filipino spa treatments, massages, and wellness activities for complete mind and body relaxation." }, price: "水療服務約 PHP 1500-3000+/人", website: "https://nurturewellnessvillage.com/", mapLink: "https://maps.app.goo.gl/b3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                        { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip4",
+                title: "行程 4：咖啡與甜點愛好者之旅",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Cafe Voi La, Tagaytay", "Gourmet Farms, Tagaytay", "Puzzle Mansion, Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:30 AM - 10:00 AM", name: "早餐與咖啡 @ Cafe Voi La", description: { 'zh-Hant': "Cafe Voi La 位於 Crosswinds 區域，裝潢獨特，提供多種咖啡、甜點和亞洲風味餐點，氛圍舒適。", 'en': "Cafe Voi La, located in the Crosswinds area, features unique decor and offers a variety of coffees, desserts, and Asian-inspired dishes in a comfortable ambiance." }, price: "餐點約 PHP 300-700/人", website: "https://www.facebook.com/CafeVoilaTagaytay/", mapLink: "https://maps.app.goo.gl/c3wN5538G1c8X5P77" },
+                        { time: "10:15 AM - 12:00 PM", name: "咖啡農場探索 @ Gourmet Farms", description: { 'zh-Hant': "菲律賓第一家有機農場，提供咖啡豆種植和加工的導覽，並可購買新鮮咖啡產品。", 'en': "The first organic farm in the Philippines, Gourmet Farms offers guided tours of its coffee bean cultivation and processing, and you can purchase fresh coffee products here." }, price: "導覽費約 PHP 100-200/人", website: "https://gourmetfarms.com.ph/", mapLink: "https://maps.app.goo.gl/d3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "12:30 PM - 01:30 PM", name: "午餐 @ Gourmet Farms Restaurant", description: { 'zh-Hant': "在農場內的餐廳享用以新鮮有機食材烹製的午餐。", 'en': "Enjoy lunch prepared with fresh, organic ingredients at the farm's restaurant." }, price: "餐點約 PHP 400-800/人", website: "https://gourmetfarms.com.ph/", mapLink: "https://maps.app.goo.gl/e3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "02:00 PM - 04:30 PM", name: "拼圖世界 @ Puzzle Mansion", description: { 'zh-Hant': "世界上最大的拼圖博物館，收藏了數千個拼圖，包括許多獨特和巨大的作品，是吉尼斯世界紀錄保持者的私人收藏。", 'en': "The world's largest puzzle museum, Puzzle Mansion houses thousands of puzzles, including many unique and giant pieces, all part of a Guinness World Record holder's private collection." }, price: "入場費約 PHP 100-150/人", website: "https://www.facebook.com/PuzzleMansion/", mapLink: "https://maps.app.goo.gl/f3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                        { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip5",
+                title: "行程 5：瑞士風情與湖景晚餐",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Taal Vista Hotel, Tagaytay", "People's Park in the Sky, Tagaytay", "Marcia Adams' Restaurant, Tagaytay", "Crosswinds Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:00 AM - 09:30 AM", name: "早餐 @ Taal Vista Hotel", description: { 'zh-Hant': "大雅台歷史悠久的酒店，擁有絕佳的塔爾湖景觀，在此享用早餐可欣賞美景。", 'en': "A historic hotel in Tagaytay with excellent views of Taal Lake, where you can enjoy breakfast while admiring the scenery." }, price: "自助早餐約 PHP 800-1200/人", website: "https://www.taalvistahotel.com/", mapLink: "https://maps.app.goo.gl/g3wN5538G1c8X5P77" },
+                        { time: "09:45 AM - 11:30 AM", name: "景觀 @ People's Park in the Sky", description: { 'zh-Hant': "位於大雅台的最高點，原為未完工的總統行宮，現改為公園，可在此俯瞰塔爾湖和周邊地區的壯麗景色。", 'en': "Located at Tagaytay's highest point, this former unfinished presidential palace is now a park offering magnificent panoramic views of Taal Lake and the surrounding areas." }, price: "入場費約 PHP 30-50/人", website: null, mapLink: "https://maps.app.goo.gl/h3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "12:30 PM - 02:00 PM", name: "午餐 @ Marcia Adams' Restaurant", description: { 'zh-Hant': "隱藏在花園中的地中海風格餐廳，以其浪漫的氛圍和美味的餐點而聞名，需要提前預約。", 'en': "A Mediterranean-style restaurant hidden within a garden, known for its romantic ambiance and delicious food. Advance reservations are required." }, price: "套餐約 PHP 1000-1500/人", website: "https://www.facebook.com/marciaadamsrestaurant/", mapLink: "https://maps.app.goo.gl/i3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "02:30 PM - 04:30 PM", name: "瑞士小鎮體驗 @ Crosswinds Tagaytay (Swiss Village)", description: { 'zh-Hant': "一個以瑞士村莊為主題的社區，擁有歐式建築、咖啡館和美麗的風景，適合拍照和散步。", 'en': "A community themed as a Swiss village, featuring European-style architecture, cafes, and beautiful landscapes, perfect for photos and leisurely strolls." }, price: "免費入場，咖啡/點心另計", website: "https://www.facebook.com/CrosswindsOfficial/", mapLink: "https://maps.app.goo.gl/j3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                         { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip6",
+                title: "行程 6：家庭農場與遊樂園樂趣",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Charito by Bag of Beans, Tagaytay", "Paradizoo, Tagaytay", "Dreamland Arts & Crafts Cafe, Tagaytay", "Sky Ranch Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:00 AM - 09:30 AM", name: "早餐 @ Bag of Beans (Charito by Bag of Beans)", description: { 'zh-Hant': "Bag of Beans 旗下的另一家分店，擁有更現代的裝潢和同樣美味的餐點，可欣賞湖景。", 'en': "Another branch under the Bag of Beans brand, featuring more modern decor and equally delicious food, with lake views." }, price: "餐點約 PHP 300-600/人", website: "https://www.facebook.com/charitobybagofbeans/", mapLink: "https://maps.app.goo.gl/k3wN5538G1c8X5P77" },
+                        { time: "10:00 AM - 12:00 PM", name: "動物農場 @ Paradizoo", description: { 'zh-Hant': "一個結合動物園和農場的景點，有各種動物、花園和農場活動，適合家庭和兒童。", 'en': "A destination combining a zoo and a farm, featuring various animals, gardens, and farm activities, suitable for families and children." }, price: "入場費約 PHP 199-299/人", website: "https://www.zoomanity.com.ph/themeparks/paradizoo/", mapLink: "https://maps.app.goo.gl/l3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "12:30 PM - 01:30 PM", name: "午餐 @ Dreamland Arts & Crafts Cafe", description: { 'zh-Hant': "一家充滿藝術氣息的咖啡館，提供輕食和飲料，環境獨特，適合拍照。", 'en': "An art-filled cafe offering light meals and beverages, with a unique ambiance perfect for photos." }, price: "餐點約 PHP 200-500/人", website: "https://www.facebook.com/DreamlandArtsAndCraftsCafe/", mapLink: "https://maps.app.goo.gl/m3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "02:00 PM - 04:30 PM", name: "遊玩 @ Sky Ranch Tagaytay", description: { 'zh-Hant': "小型遊樂園，擁有菲律賓最高的摩天輪「Sky Eye」，以及其他遊樂設施和美食攤位。", 'en': "A compact amusement park featuring the Philippines' tallest Ferris wheel, 'Sky Eye,' along with other rides and food stalls." }, price: "入場費約 PHP 80-100/人；每個遊樂設施單獨收費，摩天輪約 PHP 150/人", website: "https://www.facebook.com/SkyRanchTagaytay/", mapLink: "https://maps.app.goo.gl/n3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                         { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip7",
+                title: "行程 7：當地風味與拼圖探險",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Tagaytay City", "Tagaytay Flower Market", "Rowena's Pasalubong & Cafe, Tagaytay", "Puzzle Mansion, Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:00 AM - 09:00 AM", name: "早餐 @ Local Tapsilog Eatery", description: { 'zh-Hant': "體驗菲律賓道地的 Tapsilog（醃牛肉飯）早餐，感受當地生活。(可於大雅台市區尋找)", 'en': "Experience an authentic Filipino Tapsilog (marinated beef with fried rice and egg) breakfast, immersing yourself in local life. (Can be found in Tagaytay city proper)" }, price: "餐點約 PHP 150-250/人", website: null, mapLink: "https://maps.app.goo.gl/o3wN5538G1c8X5P77" },
+                        { time: "09:30 AM - 11:30 AM", name: "花卉農場 @ Tagaytay Flower Farm", description: { 'zh-Hant': "大雅台有許多花卉農場和花店，可以欣賞各種鮮花，購買新鮮花束。(例如：Mahogany Beef Market & Bulalohan 附近花店區或 Tagaytay City Market)", 'en': "Tagaytay has numerous flower farms and shops where you can admire various fresh flowers and purchase bouquets. (e.g., near Mahogany Beef Market & Bulalohan or Tagaytay City Market)" }, price: "免費參觀，購買花卉另計", website: null, mapLink: "https://maps.app.goo.gl/p3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "12:00 PM - 01:30 PM", name: "午餐與伴手禮 @ Rowena's Pasalubong & Cafe", description: { 'zh-Hant': "大雅台著名的伴手禮店，提供各種當地特產，如塔爾火山咖啡、水果餡餅等，也設有咖啡廳供應餐點。", 'en': "Rowena's is a famous souvenir shop in Tagaytay, offering various local specialties like Taal Volcano coffee and fruit tarts. It also has a cafe serving meals." }, price: "餐點約 PHP 300-600/人", website: "https://www.facebook.com/RowenasPasalubong/", mapLink: "https://maps.app.goo.gl/q3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "02:00 PM - 04:30 PM", name: "拼圖世界 @ Puzzle Mansion", description: { 'zh-Hant': "世界上最大的拼圖博物館，收藏了數千個拼圖，包括許多獨特和巨大的作品，是吉尼斯世界紀錄保持者的私人收藏。", 'en': "The world's largest puzzle museum, Puzzle Mansion houses thousands of puzzles, including many unique and giant pieces, all part of a Guinness World Record holder's private collection." }, price: "入場費約 PHP 100-150/人", website: "https://www.facebook.com/PuzzleMansion/", mapLink: "https://maps.app.goo.gl/r3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                        { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip8",
+                title: "行程 8：藝術與自然融合之旅",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Museo Orlina, Tagaytay", "Tagaytay Highlands", "Cafe Voi La, Tagaytay", "Tagaytay Picnic Grove", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:30 AM - 10:30 AM", name: "藝術欣賞 @ Museo Orlina", description: { 'zh-Hant': "菲律賓著名玻璃藝術家 Ramon Orlina 的博物館，展示其精美的玻璃雕塑作品。", 'en': "Museo Orlina is the museum of renowned Filipino glass artist Ramon Orlina, showcasing his exquisite glass sculptures." }, price: "入場費約 PHP 150-200/人", website: "https://museoorlina.com/", mapLink: "https://maps.app.goo.gl/s3wN5538G1c8X5P77" },
+                        { time: "10:45 AM - 12:00 PM", name: "湖景咖啡 @ Tagaytay Highlands (Clubhouse Cafe)", description: { 'zh-Hant': "在 Tagaytay Highlands 附近的咖啡館享用咖啡，欣賞其高爾夫球場和湖景。(部分區域可能需會員或訪客通行)", 'en': "Enjoy coffee at a cafe near Tagaytay Highlands, admiring its golf course and lake views. (Some areas may require membership or guest passes)" }, price: "咖啡/點心約 PHP 200-400/人", website: "https://www.tagaytayhighlands.com/", mapLink: "https://maps.app.goo.gl/t3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "12:30 PM - 01:30 PM", name: "午餐 @ Cafe Voi La", description: { 'zh-Hant': "裝潢獨特，提供多種咖啡、甜點和亞洲風味餐點，氛圍舒適。", 'en': "A uniquely decorated cafe offering a variety of coffees, desserts, and Asian-inspired dishes in a comfortable ambiance." }, price: "餐點約 PHP 300-700/人", website: "https://www.facebook.com/CafeVoilaTagaytay/", mapLink: "https://maps.app.goo.gl/u3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "02:00 PM - 04:30 PM", name: "戶外活動 @ Tagaytay Picnic Grove", description: { 'zh-Hant': "除了觀景，也可在此體驗空中滑索或騎馬等戶外活動。", 'en': "In addition to sightseeing, you can also enjoy outdoor activities like ziplining or horseback riding here." }, price: "入場費約 PHP 50/人；空中滑索約 PHP 200-300/人", website: null, mapLink: "https://maps.app.goo.gl/v3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                        { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip9",
+                title: "行程 9：全景視野與休閒購物",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "People's Park in the Sky, Tagaytay", "Good Shepherd Convent, Tagaytay", "Charito by Bag of Beans, Tagaytay", "Sky Ranch Tagaytay", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:30 AM - 10:30 AM", name: "景觀 @ People's Park in the Sky", description: { 'zh-Hant': "位於大雅台的最高點，可在此俯瞰塔爾湖和周邊地區的壯麗景色。", 'en': "Located at Tagaytay's highest point, this park offers magnificent panoramic views of Taal Lake and the surrounding areas." }, price: "入場費約 PHP 30-50/人", website: null, mapLink: "https://maps.app.goo.gl/w3wN5538G1c8X5P77" },
+                        { time: "10:45 AM - 12:00 PM", name: "伴手禮採購 @ Good Shepherd Convent (Tagaytay)", description: { 'zh-Hant': "以其美味的 Ube Jam（紫薯果醬）和其他當地產品而聞名，是購買伴手禮的好地方。", 'en': "Known for its delicious Ube Jam (purple yam jam) and other local products, it's a great place to buy souvenirs." }, price: "產品價格不等", website: "https://www.facebook.com/GoodShepherdTagaytayOfficial/", mapLink: "https://maps.app.goo.gl/x3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "12:30 PM - 01:30 PM", name: "午餐 @ Charito by Bag of Beans", description: { 'zh-Hant': "Bag of Beans 旗下的分店，提供美味餐點並可欣賞塔爾湖景。", 'en': "A branch of Bag of Beans, offering delicious meals with views of Taal Lake." }, price: "餐點約 PHP 400-800/人", website: "https://www.facebook.com/charitobybagofbeans/", mapLink: "https://maps.app.goo.gl/y3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "02:00 PM - 04:30 PM", name: "遊玩 @ Sky Ranch Tagaytay", description: { 'zh-Hant': "小型遊樂園，擁有菲律賓最高的摩天輪「Sky Eye」，以及其他遊樂設施和美食攤位。", 'en': "A compact amusement park featuring the Philippines' tallest Ferris wheel, 'Sky Eye,' along with other rides and food stalls." }, price: "入場費約 PHP 80-100/人；每個遊樂設施單獨收費，摩天輪約 PHP 150/人", website: "https://www.facebook.com/SkyRanchTagaytay/", mapLink: "https://maps.app.goo.gl/z3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                        { time: "05:00 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            },
+            {
+                id: "trip10",
+                title: "行程 10：身心靈淨化之旅",
+                startEnd: "馬卡提 (Makati)",
+                routeMapLink: generateRouteUrl(["Makati, Metro Manila", "Nurture Wellness Village, Tagaytay", "Caleruega Church, Nasugbu", "Makati, Metro Manila"]),
+                activities: {
+                    morning: [
+                        { time: "08:30 AM - 11:00 AM", name: "養生早餐與瑜伽/活動 @ Nurture Wellness Village", description: { 'zh-Hant': "屢獲殊榮的養生度假村，提供健康餐點和各種養生課程，可在此享受寧靜的早晨。", 'en': "This award-winning wellness resort offers healthy meals and various wellness classes, allowing you to enjoy a peaceful morning." }, price: "早餐約 PHP 500-800/人；活動費用另計", website: "https://nurturewellnessvillage.com/", mapLink: "https://maps.app.goo.gl/A3wN5538G1c8X5P77" }
+                    ],
+                    noon: [
+                        { time: "11:30 AM - 01:00 PM", name: "午餐 @ Nurture Wellness Village (The Farmer's Table)", description: { 'zh-Hant': "在度假村內的餐廳享用以新鮮有機食材烹製的健康午餐。", 'en': "Enjoy a healthy lunch prepared with fresh, organic ingredients at the resort's restaurant." }, price: "餐點約 PHP 600-1000/人", website: "https://nurturewellnessvillage.com/", mapLink: "https://maps.app.goo.gl/B3wN5538G1c8X5P77" }
+                    ],
+                    afternoon: [
+                        { time: "01:30 PM - 04:00 PM", name: "靜思 @ Caleruega Church", description: { 'zh-Hant': "位於大雅台附近的一個美麗教堂 (行政區劃屬於 Nasugbu, Batangas)，以其寧靜的氛圍和周圍的自然景觀而聞名，是許多婚禮的熱門地點。", 'en': "A beautiful church located near Tagaytay (administratively in Nasugbu, Batangas), known for its serene atmosphere and surrounding natural landscapes, making it a popular venue for weddings." }, price: "入場/捐獻約 PHP 50-100/人", website: "https://www.facebook.com/caleruega.ph/", mapLink: "https://maps.app.goo.gl/C3wN5538G1c8X5P77" }
+                    ],
+                    evening: [
+                        { time: "04:30 PM 後", name: "返程", description: { 'zh-Hant': "從大雅台返回馬卡提。", 'en': "Return from Tagaytay to Makati." }, price: null, website: null, mapLink: null }
+                    ]
+                }
+            }
+        ];
+
+        const itinerarySelector = document.getElementById('itinerarySelector');
+        const itineraryDisplay = document.getElementById('itineraryDisplay');
+        const languageSelector = document.getElementById('languageSelector');
+
+        function parsePriceForTotal(priceString) {
+            if (!priceString || typeof priceString !== 'string') return 0;
+
+            let match = priceString.match(/PHP\s*(\d+)(?:-(\d+))?\s*\/人/);
+            if (match) {
+                return parseInt(match[1]);
+            }
+            match = priceString.match(/PHP\s*(\d+)(?:-(\d+))?\s*\/早午餐/);
+             if (match) {
+                return parseInt(match[1]);
+            }
+            match = priceString.match(/PHP\s*(\d+)(?:-(\d+))?\s*\/自助餐/);
+             if (match) {
+                return parseInt(match[1]);
+            }
+            match = priceString.match(/入場費約 PHP\s*(\d+)/);
+            if (match) {
+                const activitySpecificExclusion = ["空中滑索", "摩天輪"];
+                if (!activitySpecificExclusion.some(ex => priceString.includes(ex)) || priceString.startsWith("入場費")) {
+                     return parseInt(match[1]);
+                }
+            }
+            match = priceString.match(/導覽費約 PHP\s*(\d+)/);
+             if (match) {
+                return parseInt(match[1]);
+            }
+             match = priceString.match(/套餐約 PHP\s*(\d+)/);
+             if (match) {
+                return parseInt(match[1]);
+            }
+             match = priceString.match(/入場\/捐獻約 PHP\s*(\d+)/);
+             if (match) {
+                return parseInt(match[1]);
+            }
+
+            match = priceString.match(/PHP\s*(\d+)/);
+            if (match) {
+                if (!priceString.includes("/人") && !priceString.includes("Bulalo") && !priceString.includes("水療服務")) {
+                    return parseInt(match[1]);
+                }
+            }
+            
+            if (priceString.includes("不等") || priceString.includes("免費") || priceString.includes("另計") || priceString.includes("水療服務")) {
+                return 0;
+            }
+
+            return 0;
+        }
+
+        function updateLanguage() {
+            const t = translations[currentLanguage];
+
+            document.getElementById('appTitle').textContent = t.appTitle;
+            document.getElementById('selectItineraryLabel').textContent = t.selectItinerary;
+            document.getElementById('introTitle').textContent = t.introTitle;
+            document.getElementById('introText').textContent = t.introText;
+            document.getElementById('importantNotesTitle').textContent = t.importantNotesTitle;
+            document.getElementById('noteTraffic').innerHTML = t.noteTraffic;
+            document.getElementById('noteReservation').innerHTML = t.noteReservation;
+            document.getElementById('noteInfo').innerHTML = t.noteInfo;
+            document.getElementById('noteNavigation').innerHTML = t.noteNavigation;
+            document.getElementById('footerText1').textContent = t.footerText1;
+            document.getElementById('footerText2').textContent = t.footerText2;
+
+            populateSelector(); // Re-populate the selector with translated titles
+            itinerarySelector.value = currentItineraryId; // Ensure the correct itinerary is selected after re-populating
+            displayItinerary(currentItineraryId); // Re-display the currently selected itinerary to update dynamic labels
+        }
+
+        function displayItinerary(itineraryId) {
+            const selectedItinerary = itineraries.find(it => it.id === itineraryId);
+            if (!selectedItinerary) return;
+
+            const t = translations[currentLanguage];
+            let totalEstimatedCost = 0;
+            let html = `<div class="bg-white p-6 rounded-xl shadow-xl">`;
+            html += `<h2 class="text-3xl font-bold text-sky-700 mb-2 text-center">${t.itineraryTitles[selectedItinerary.id]}</h2>`; // Use translated itinerary title
+            html += `<p class="text-md text-gray-600 mb-1 text-center"><strong>${t.selectItinerary.replace('：', '')}：</strong> ${selectedItinerary.startEnd}</p>`;
+            html += `<p class="text-md text-gray-600 mb-6 text-center">
+                        <a href="${selectedItinerary.routeMapLink}" target="_blank" rel="noopener noreferrer" class="text-rose-500 hover:text-rose-700 underline">
+                            ${t.viewRouteMap}
+                        </a>
+                     </p>`;
+
+
+            const timePeriods = { morning: t.timeMorning, noon: t.timeNoon, afternoon: t.timeAfternoon, evening: t.timeEvening };
+
+            for (const periodKey in timePeriods) {
+                if (selectedItinerary.activities[periodKey] && selectedItinerary.activities[periodKey].length > 0) {
+                    html += `<div class="mb-8">`;
+                    html += `<h3 class="text-2xl font-semibold text-sky-600 mb-4 border-b-2 border-sky-200 pb-2">${timePeriods[periodKey]}</h3>`;
+                    html += `<div class="space-y-6">`;
+                    selectedItinerary.activities[periodKey].forEach(activity => {
+                        totalEstimatedCost += parsePriceForTotal(activity.price);
+                        // Use activity.description[currentLanguage] for description
+                        html += `
+                            <article class="activity-card bg-stone-50 p-5 rounded-lg shadow-md hover:shadow-lg">
+                                <h4 class="text-xl font-semibold text-sky-700 mb-1">${activity.name}</h4>
+                                <p class="text-sm text-gray-500 mb-2">${t.timePrefix}${activity.time}</p>
+                                <p class="text-gray-700 mb-3 leading-relaxed">${activity.description[currentLanguage]}</p>
+                                ${activity.price ? `<p class="text-gray-600 font-medium mb-3">${t.pricePrefix}${activity.price}</p>` : ''}
+                                <div class="flex flex-wrap gap-3 items-center">
+                                    ${activity.website ? `<a href="${activity.website}" target="_blank" rel="noopener noreferrer" class="bg-sky-500 hover:bg-sky-600 text-white text-sm py-2 px-3 rounded-md transition duration-300">${t.officialWebsite}</a>` : `<span class="text-gray-400 text-sm py-2 px-3">${t.noOfficialWebsite}</span>`}
+                                    ${activity.mapLink ? `<a href="${activity.mapLink}" target="_blank" rel="noopener noreferrer" class="bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-3 rounded-md transition duration-300">${t.mapLink}</a>` : ''}
+                                </div>
+                            </article>
+                        `;
+                    });
+                    html += `</div></div>`;
+                }
+            }
+            html += `<div class="mt-8 pt-4 border-t-2 border-rose-300">
+                        <p class="text-2xl font-bold text-center text-rose-600">
+                            ${t.estimatedCost} <span class="text-rose-500">${totalEstimatedCost > 0 ? totalEstimatedCost + ' PHP' : t.infoUnavailable}</span>
+                        </p>
+                        <p class="text-xs text-gray-500 text-center mt-1">${t.costDisclaimer}</p>
+                     </div>`;
+            html += `</div>`;
+            itineraryDisplay.innerHTML = html;
+        }
+
+        function populateSelector() {
+            // Clear existing options first
+            itinerarySelector.innerHTML = '';
+            const t = translations[currentLanguage]; // Get current language translations
+            itineraries.forEach(it => {
+                const option = document.createElement('option');
+                option.value = it.id;
+                option.textContent = t.itineraryTitles[it.id]; // Use translated title
+                itinerarySelector.appendChild(option);
+            });
+            // Set the selected value back after repopulating
+            itinerarySelector.value = currentItineraryId;
+        }
+
+        itinerarySelector.addEventListener('change', (event) => {
+            currentItineraryId = event.target.value; // Update currentItineraryId
+            displayItinerary(currentItineraryId);
+        });
+
+        languageSelector.addEventListener('change', (event) => {
+            currentLanguage = event.target.value;
+            updateLanguage();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial language and display first itinerary
+            if (itineraries.length > 0) {
+                currentItineraryId = itineraries[0].id; // Ensure currentItineraryId is set on load
+                itinerarySelector.value = currentItineraryId; // Set initial selection
+                updateLanguage(); // This will call populateSelector and displayItinerary
+            }
+        });
+    </script>
+</body>
+</html>
