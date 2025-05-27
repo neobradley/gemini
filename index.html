@@ -125,6 +125,25 @@
             color: white;
         }
 
+        .open-new-tab-button {
+            display: block; /* Make it a block element */
+            width: calc(100% - 40px); /* Adjust width for padding */
+            margin: 20px auto 0; /* Center and add top margin */
+            padding: 10px 15px;
+            background-color: #4CAF50; /* Green color for the button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-align: center;
+        }
+
+        .open-new-tab-button:hover {
+            background-color: #45a049;
+        }
+
         .footer {
             background-color: #20232a;
             color: #ccc;
@@ -158,6 +177,7 @@
                     <li><a href="#" data-src="./tagaytay-trip/index.html">菲律賓大雅台一日遊行程規劃</a></li>
                 </ul>
             </nav>
+            <button id="open-new-tab" class="open-new-tab-button" style="display:none;">在新分頁開啟</button>
         </aside>
     </div>
 
@@ -170,6 +190,9 @@
             const projectLinks = document.querySelectorAll('#project-list a');
             const iframe = document.getElementById('project-iframe');
             const iframePlaceholder = document.getElementById('iframe-placeholder');
+            const openNewTabButton = document.getElementById('open-new-tab');
+
+            let currentIframeSrc = ''; // To store the current source of the iframe
 
             projectLinks.forEach(link => {
                 link.addEventListener('click', function (event) {
@@ -184,16 +207,26 @@
                         iframePlaceholder.style.display = 'none';
                         iframe.style.display = 'block';
                         iframe.src = src;
+                        currentIframeSrc = src; // Update the current source
+                        openNewTabButton.style.display = 'block'; // Show the button
                     } else {
                         iframe.style.display = 'none';
                         iframePlaceholder.style.display = 'flex';
                         iframe.src = 'about:blank';
+                        currentIframeSrc = ''; // Clear the source
+                        openNewTabButton.style.display = 'none'; // Hide the button
                     }
                 });
             });
+
+            // Event listener for the new button
+            openNewTabButton.addEventListener('click', function() {
+                if (currentIframeSrc) {
+                    window.open(currentIframeSrc, '_blank'); // Open in a new tab
+                }
+            });
         });
     </script>
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-QVWCQYFCTH"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
