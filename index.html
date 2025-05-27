@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 專案入口網站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Inter', sans-serif;
+            background-color: #F3F4F6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 960px;
+        }
+        .header-gradient {
+            background: linear-gradient(to right, #6366F1, #8B5CF6); /* Indigo to Violet */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .link-button {
+            display: inline-block;
+            background-color: #4F46E5; /* Indigo-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .link-button:hover {
+            background-color: #4338CA; /* Indigo-700 */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="header-gradient text-white py-8 shadow-lg">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3">Gemini 專案入口網站</h1>
+            <p class="text-xl md:text-2xl opacity-90">探索 AI 生成的創新應用</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <section class="mb-12 text-center">
+            <h2 class="text-3xl font-semibold text-gray-800 mb-6">關於 Gemini</h2>
+            <p class="text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
+                這個專案展示了 Gemini 在生成多樣化內容方面的強大能力，從深入的數據分析報告到實用的旅遊行程規劃。
+                透過 Gemini，我們能夠快速且有效地處理資訊，並將其轉化為對用戶有價值的應用。
+                以下是本 Repo 中包含的兩個主要 AI 生成樣本專案。
+            </p>
+        </section>
+
+        <section class="grid md:grid-cols-2 gap-8">
+            <div class="card p-8 flex flex-col items-center text-center">
+                <h3 class="text-2xl font-bold text-indigo-700 mb-4">東南亞旅遊安全透視</h3>
+                <p class="text-gray-600 mb-6 flex-grow">
+                    這是一個關於東南亞各國治安評估與旅遊建議的報告。
+                    它利用 AI 整理和分析了各國的治安狀況，提供了詳細的國家評級、常見安全問題以及實用的旅遊安全建議。
+                    幫助您在規劃東南亞之旅時，能夠更安心、更有準備。
+                </p>
+                <a href="./sea-safety/index.html" class="link-button">前往「東南亞旅遊安全」</a>
+            </div>
+
+            <div class="card p-8 flex flex-col items-center text-center">
+                <h3 class="text-2xl font-bold text-indigo-700 mb-4">菲律賓大雅台一日遊行程規劃器</h3>
+                <p class="text-gray-600 mb-6 flex-grow">
+                    這個應用程式為您提供了從馬卡提出發的 10 個不同菲律賓大雅台一日遊行程。
+                    每個行程都包含詳細的活動安排、預估費用和相關連結，讓您可以輕鬆選擇並規劃您在大雅台的完美旅程。
+                    它展示了 Gemini 在行程規劃和資訊整合方面的應用。
+                </p>
+                <a href="./tagaytay-trip/index.html" class="link-button">前往「大雅台行程規劃」</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 text-center mt-12">
+        <p class="text-sm opacity-80">&copy; 2024 Gemini AI 生成樣本。所有權利保留。</p>
+    </footer>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QVWCQYFCTH"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-QVWCQYFCTH');
+    </script>
+</body>
+</html>
