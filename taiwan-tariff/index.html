@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動分析：新台幣匯率與關稅風險</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral with Deep Blue Accent -->
+    <!-- Application Structure Plan: The application is structured as a top-down narrative scroll, designed to guide the user from the core thesis to detailed analysis and strategic conclusions. It starts with a bold "Hero" section stating the main argument. It then presents the "Core Dilemma" (Exports vs. Geopolitics) in a clear, visual dichotomy. The "Interactive Impact Analysis" section turns the static report table into a user-driven exploration tool, enhancing engagement. The "Geopolitical Chessboard" uses a visual flow to explain the complex pressures, making abstract concepts tangible. The "Myth Debunking Calculator" provides a hands-on tool to disprove the economic fallacy of offsetting tariffs with appreciation. Finally, the "Strategic Matrix" offers actionable insights in an interactive format. This structure was chosen over a simple report layout to transform passive reading into active learning, making the complex interplay of economics and politics more accessible and understandable for a broader audience. -->
+    <!-- Visualization & Content Choices: 
+        - Taiwan-US Trade Surplus Trend (Bar Chart): Goal: Change. Method: Chart.js. Justification: A bar chart clearly shows the year-over-year growth of the trade surplus, which is the root cause of the political friction discussed in the report.
+        - Industry Impact Selector (Interactive Cards): Goal: Compare. Method: HTML/CSS/JS. Justification: This replaces a static table, allowing users to focus on one industry at a time, making the detailed pros and cons easier to digest.
+        - Geopolitical Pressure Flow (Diagram): Goal: Organize. Method: HTML/Tailwind CSS. Justification: A visual flowchart built with divs and borders is more intuitive than a long paragraph for explaining the chain of causality from trade surplus to tariff risk.
+        - Tariff & Exchange Rate Calculator (Interactive Form): Goal: Compare/Inform. Method: HTML/JS. Justification: This interactive tool provides irrefutable, hands-on proof of the report's core economic argument (Chapter 8) that appreciation and tariffs are a double blow, which is far more impactful than a static calculation.
+        - Strategic Response Matrix (Interactive Grid): Goal: Organize. Method: HTML/CSS/JS. Justification: An interactive 2x2 grid allows users to explore complex strategic recommendations (Table 2) in a structured, non-overwhelming way.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F9FAFB; /* A very light gray */
+            color: #1F2937; /* Dark gray for text */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #1D4ED8; /* Deep Blue */
+            border-bottom-color: #1D4ED8;
+        }
+        .strategy-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .strategy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header id="navbar" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-blue-800">貨幣與關稅的賽局</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#dilemma" class="nav-link text-gray-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">核心兩難</a>
+                        <a href="#impact" class="nav-link text-gray-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">產業衝擊</a>
+                        <a href="#geopolitics" class="nav-link text-gray-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">地緣政治</a>
+                        <a href="#myth" class="nav-link text-gray-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">謬誤破解</a>
+                        <a href="#strategy" class="nav-link text-gray-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">應對策略</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="hero" class="text-center py-16">
+            <h2 class="text-4xl md:text-5xl font-bold text-blue-900 mb-4">升值非抵銷，而是政治避險</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                深入解析「新台幣升值是為抵銷關稅風險」的真正意涵。這並非經濟學的直接對沖，而是一場複雜的地緣政治戰略選擇，旨在拆除美國課徵懲罰性關稅的政治理由。
+            </p>
+        </section>
+
+        <section id="dilemma" class="py-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">台灣經濟的核心兩難</h3>
+                <p class="mt-2 text-gray-600">在維持出口競爭力與應對國際政治壓力之間，台灣正走在一條微妙的鋼索上。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-4">🏭</span>
+                        <h4 class="text-2xl font-semibold text-red-700">出口商的壓力</h4>
+                    </div>
+                    <p class="text-gray-700">傳統上，弱勢貨幣有利於出口。新台幣升值會讓台灣產品在國際市場變貴，直接壓縮電子代工、機械、紡織等利潤微薄產業的獲利空間，形成「接單即虧損」的困境。</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-4">🏛️</span>
+                        <h4 class="text-2xl font-semibold text-blue-700">地緣政治的壓力</h4>
+                    </div>
+                    <p class="text-gray-700">對美巨大的貿易順差，成為美國威脅課徵高額關稅的理由。允許新台幣升值，是台灣向美國釋放的「善意」信號，表明無意操縱匯率，以此降低被制裁的風險。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact" class="py-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">產業衝擊互動分析</h3>
+                <p class="mt-2 text-gray-600">新台幣升值如同一把雙面刃。點擊下方產業類別，查看其受到的具體影響。</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                <button class="industry-btn active bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium" data-industry="semiconductor">半導體</button>
+                <button class="industry-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium" data-industry="ems">電子組裝</button>
+                <button class="industry-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium" data-industry="machinery">機械工具機</button>
+                <button class="industry-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium" data-industry="aviation">航空航運</button>
+                <button class="industry-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium" data-industry="petrochemical">石化鋼鐵</button>
+                <button class="industry-btn bg-white text-gray-700 px-4 py-2 rounded-full text-sm font-medium" data-industry="retail">零售通路</button>
+            </div>
+            <div id="impact-display" class="bg-white p-8 rounded-xl shadow-lg transition-all duration-500 min-h-[250px] border border-gray-200">
+            </div>
+        </section>
+
+        <section id="geopolitics" class="py-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">地緣政治的壓力傳導</h3>
+                <p class="mt-2 text-gray-600">台灣面臨的關稅風險，源自一連串環環相扣的政治與經濟因素。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                    <h4 class="text-2xl font-semibold mb-4 text-center">對美貿易順差持續擴大</h4>
+                    <p class="text-gray-600 mb-4 text-center">受惠於全球對高科技產品的需求以及供應鏈轉移，台灣對美貿易順差近年來急劇攀升，成為美國關注的焦點。</p>
+                    <div class="chart-container">
+                        <canvas id="tradeSurplusChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                    <h4 class="text-2xl font-semibold mb-6 text-center">壓力傳導路徑</h4>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="bg-blue-100 text-blue-800 font-bold rounded-full w-10 h-10 flex items-center justify-center">1</div>
+                            <p class="ml-4 text-gray-700">龐大貿易順差，引發美國關切。</p>
+                        </div>
+                        <div class="h-8 w-px bg-gray-300 ml-5"></div>
+                        <div class="flex items-center">
+                            <div class="bg-blue-100 text-blue-800 font-bold rounded-full w-10 h-10 flex items-center justify-center">2</div>
+                            <p class="ml-4 text-gray-700">被列入「匯率操縱國」觀察名單，政治壓力升高。</p>
+                        </div>
+                        <div class="h-8 w-px bg-gray-300 ml-5"></div>
+                        <div class="flex items-center">
+                            <div class="bg-red-100 text-red-800 font-bold rounded-full w-10 h-10 flex items-center justify-center">3</div>
+                            <p class="ml-4 text-gray-700">美國威脅課徵高額「懲罰性關稅」作為制衡手段。</p>
+                        </div>
+                         <div class="h-8 w-px bg-gray-300 ml-5"></div>
+                        <div class="flex items-center">
+                            <div class="bg-green-100 text-green-800 font-bold rounded-full w-10 h-10 flex items-center justify-center">4</div>
+                            <p class="ml-4 text-gray-700">台灣允許新台幣升值，作為一種政治避險策略。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="myth" class="py-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">破解經濟迷思：互動計算機</h3>
+                <p class="mt-2 text-gray-600">升值與關稅是雙重打擊，而非相互抵銷。親手操作，見證成本的疊加效應。</p>
+            </div>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 p-8 bg-white rounded-xl shadow-lg border border-gray-200">
+                <div>
+                    <div class="mb-4">
+                        <label for="baseCost" class="block text-sm font-medium text-gray-700">產品基礎成本 (NTD)</label>
+                        <input type="number" id="baseCost" value="3000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div class="mb-4">
+                        <label for="exchangeRate" class="block text-sm font-medium text-gray-700">美元兌台幣匯率: <span id="exchangeRateValue" class="font-bold text-blue-600">30</span></label>
+                        <input type="range" id="exchangeRate" min="27" max="33" value="30" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div class="mb-4">
+                        <label for="tariffRate" class="block text-sm font-medium text-gray-700">美國關稅稅率: <span id="tariffRateValue" class="font-bold text-red-600">0</span>%</label>
+                        <input type="range" id="tariffRate" min="0" max="30" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg flex flex-col justify-center items-center text-center">
+                    <h4 class="text-lg font-medium text-gray-500">美國進口商最終成本</h4>
+                    <p id="finalCost" class="text-4xl font-bold text-gray-800 my-2">$100.00</p>
+                    <p id="costBreakdown" class="text-sm text-gray-500">基礎報價: $100.00 + 關稅: $0.00</p>
+                    <div id="verdict" class="mt-4 p-3 rounded-md text-sm font-medium"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="strategy" class="py-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">未來情境與應對策略矩陣</h3>
+                <p class="mt-2 text-gray-600">面對不同的關稅與匯率組合，政府與企業應如何應對？點擊卡片查看詳細策略。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="strategy-card bg-white p-6 rounded-xl border border-gray-200 cursor-pointer" data-quadrant="1">
+                    <h4 class="font-bold text-lg mb-2">象限一：競爭力危機</h4>
+                    <p class="text-sm text-gray-500">高關稅 + 新台幣升值</p>
+                </div>
+                <div class="strategy-card bg-white p-6 rounded-xl border border-gray-200 cursor-pointer" data-quadrant="2">
+                    <h4 class="font-bold text-lg mb-2">象限二：停滯性通膨風險</h4>
+                    <p class="text-sm text-gray-500">高關稅 + 新台幣貶值</p>
+                </div>
+                <div class="strategy-card bg-white p-6 rounded-xl border border-gray-200 cursor-pointer" data-quadrant="3">
+                    <h4 class="font-bold text-lg mb-2">象限三：內需天堂</h4>
+                    <p class="text-sm text-gray-500">低關稅 + 新台幣升值</p>
+                </div>
+                <div class="strategy-card bg-white p-6 rounded-xl border border-gray-200 cursor-pointer" data-quadrant="4">
+                    <h4 class="font-bold text-lg mb-2">象限四：出口榮景</h4>
+                    <p class="text-sm text-gray-500">低關稅 + 新台幣貶值</p>
+                </div>
+            </div>
+            <div id="strategy-details" class="mt-8 bg-blue-50 p-8 rounded-xl border border-blue-200 hidden">
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            <p>此為基於「貨幣與關稅的連動」報告所建構的互動式分析應用程式。</p>
+            <p>&copy; 2025 互動數據分析</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const industryData = {
+        semiconductor: {
+            title: '半導體 (晶圓代工)',
+            verdict: '中性偏負',
+            verdictColor: 'bg-yellow-100 text-yellow-800',
+            pros: '進口先進製程設備（如曝光機）的資本支出降低，有利於長期投資與技術升級。',
+            cons: '絕大部分營收以美元計價，升值直接侵蝕毛利。但高技術門檻與議價能力可部分轉嫁成本。'
+        },
+        ems: {
+            title: '電子組裝 (EMS)',
+            verdict: '負面',
+            verdictColor: 'bg-red-100 text-red-800',
+            pros: '進口晶片、面板等關鍵零組件的成本會隨之下降，提供部分緩衝。',
+            cons: '利潤極度微薄（毛三到五），對匯率極為敏感，美元報價的成品外銷，毛利被嚴重壓縮。'
+        },
+        machinery: {
+            title: '機械 / 工具機',
+            verdict: '負面',
+            verdictColor: 'bg-red-100 text-red-800',
+            pros: '部分進口關鍵零件的成本下降。',
+            cons: '典型的出口導向傳統產業，價格競爭激烈，議價能力較弱，升值會直接削弱國際競爭力，甚至導致虧損拒單。'
+        },
+        aviation: {
+            title: '航空 / 航運',
+            verdict: '正面',
+            verdictColor: 'bg-green-100 text-green-800',
+            pros: '燃油、船舶/飛機的租賃與採購成本（多以美元計價）大幅下降，利益通常遠大於營收換算的損失。',
+            cons: '部分票價與運費以美元計價，換算回台幣後營收可能下滑。'
+        },
+        petrochemical: {
+            title: '石化 / 鋼鐵',
+            verdict: '利大於弊',
+            verdictColor: 'bg-green-100 text-green-800',
+            pros: '進口原油、鐵礦砂等大宗原料成本顯著降低，對成本結構有極大幫助。',
+            cons: '部分外銷產品報價以美元計，價格競爭力會受到影響。'
+        },
+        retail: {
+            title: '零售 / 進口通路',
+            verdict: '正面',
+            verdictColor: 'bg-green-100 text-green-800',
+            pros: '進口商品（如汽車、消費品）的採購成本直接降低，可擴大毛利或降價促銷以提升市佔率。',
+            cons: '營收主要來自國內市場，較無明顯負面影響。'
+        }
+    };
+
+    const strategyData = {
+        1: {
+            title: '象限一：競爭力危機 (高關稅 + 台幣升值)',
+            content: `
+                <h5 class="font-bold text-lg mb-3">出口商承受匯率與關稅雙重壓力</h5>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h6 class="font-semibold text-blue-800">政府應對：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>設立「匯率衝擊調適基金」，提供產業臨時性融資與轉型輔導。</li>
+                            <li>加速與東協、歐盟等洽簽自由貿易協定（FTA），開拓新市場。</li>
+                            <li>提供勞工轉職訓練與補助，避免結構性失業擴大。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 class="font-semibold text-red-800">出口商策略：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>積極進行價值鏈升級，提高產品附加價值與議價能力。</li>
+                            <li>加速市場多元化布局，降低對美國市場的依賴。</li>
+                            <li>全面優化財務與自然避險操作，嚴控匯兌風險。</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        },
+        2: {
+            title: '象限二：停滯性通膨風險 (高關稅 + 台幣貶值)',
+            content: `
+                <h5 class="font-bold text-lg mb-3">進口成本與關稅推升通膨，經濟承壓</h5>
+                 <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h6 class="font-semibold text-blue-800">政府應對：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>央行需密切監控通膨預期，可能需採取緊縮性貨幣政策。</li>
+                            <li>運用財政政策，精準補貼受關稅衝擊最嚴重的產業與弱勢群體。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 class="font-semibold text-red-800">進口商策略：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>面臨嚴峻的成本壓力，需提前鎖定供應鏈合約。</li>
+                            <li>謹慎管理庫存與定價策略，應對終端需求可能萎縮的風險。</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        },
+        3: {
+            title: '象限三：內需天堂 (低關稅 + 台幣升值)',
+            content: `
+                <h5 class="font-bold text-lg mb-3">出口承壓，但內需購買力強勁</h5>
+                 <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h6 class="font-semibold text-blue-800">政府應對：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>鼓勵國內投資與消費，將強勁的購買力轉化為內生成長動能。</li>
+                            <li>引導資金投入基礎建設與產業升級。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 class="font-semibold text-green-800">內需/零售企業策略：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>把握低進口成本的機遇，擴大營運規模，引進更多元商品。</li>
+                            <li>進行策略性採購，提升毛利率與市場競爭力。</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        },
+        4: {
+            title: '象限四：出口榮景 (低關稅 + 台幣貶值)',
+            content: `
+                <h5 class="font-bold text-lg mb-3">出口商享受匯率與低關稅的雙重紅利</h5>
+                 <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h6 class="font-semibold text-blue-800">政府應對：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>監控資產價格（股市、房市）是否存在過熱風險。</li>
+                            <li>積極管理貿易順差，可透過擴大對美採購等方式，避免未來再次引發政治摩擦。</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h6 class="font-semibold text-green-800">出口商策略：</h6>
+                        <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                            <li>積極擴大全球市佔率，最大化短期利潤。</li>
+                            <li>必須將此視為週期性機會，將額外利潤投資於長期研發與韌性建設。</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        }
+    };
+
+    const impactDisplay = document.getElementById('impact-display');
+    const industryButtons = document.querySelectorAll('.industry-btn');
+
+    function updateImpactDisplay(industry) {
+        const data = industryData[industry];
+        impactDisplay.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <h4 class="text-2xl font-bold">${data.title}</h4>
+                <span class="px-3 py-1 text-sm font-medium rounded-full ${data.verdictColor}">${data.verdict}</span>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h5 class="font-semibold text-green-700 mb-2">正面影響 (Pros)</h5>
+                    <p class="text-gray-600">${data.pros}</p>
+                </div>
+                <div>
+                    <h5 class="font-semibold text-red-700 mb-2">負面影響 (Cons)</h5>
+                    <p class="text-gray-600">${data.cons}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    industryButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            industryButtons.forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+            button.classList.add('active', 'bg-blue-600', 'text-white');
+            button.classList.remove('bg-white', 'text-gray-700');
+            updateImpactDisplay(button.dataset.industry);
+        });
+    });
+
+    updateImpactDisplay('semiconductor');
+
+    const baseCostEl = document.getElementById('baseCost');
+    const exchangeRateEl = document.getElementById('exchangeRate');
+    const tariffRateEl = document.getElementById('tariffRate');
+    const exchangeRateValueEl = document.getElementById('exchangeRateValue');
+    const tariffRateValueEl = document.getElementById('tariffRateValue');
+    const finalCostEl = document.getElementById('finalCost');
+    const costBreakdownEl = document.getElementById('costBreakdown');
+    const verdictEl = document.getElementById('verdict');
+
+    function calculateCost() {
+        const baseCost = parseFloat(baseCostEl.value) || 0;
+        const exchangeRate = parseFloat(exchangeRateEl.value);
+        const tariffRate = parseFloat(tariffRateEl.value) / 100;
+
+        exchangeRateValueEl.textContent = exchangeRate.toFixed(1);
+        tariffRateValueEl.textContent = (tariffRate * 100).toFixed(0);
+
+        const baseUsdPrice = baseCost / exchangeRate;
+        const tariffAmount = baseUsdPrice * tariffRate;
+        const finalCost = baseUsdPrice + tariffAmount;
+
+        finalCostEl.textContent = `$${finalCost.toFixed(2)}`;
+        costBreakdownEl.textContent = `基礎報價: $${baseUsdPrice.toFixed(2)} + 關稅: $${tariffAmount.toFixed(2)}`;
+        
+        const originalPrice = (baseCost / 30);
+        if (finalCost > originalPrice * 1.01) {
+            verdictEl.textContent = '成本疊加：最終價格顯著上升！';
+            verdictEl.className = 'mt-4 p-3 rounded-md text-sm font-medium bg-red-100 text-red-800';
+        } else if (finalCost < originalPrice * 0.99) {
+            verdictEl.textContent = '成本下降';
+            verdictEl.className = 'mt-4 p-3 rounded-md text-sm font-medium bg-green-100 text-green-800';
+        } else {
+             verdictEl.textContent = '成本持平';
+             verdictEl.className = 'mt-4 p-3 rounded-md text-sm font-medium bg-gray-100 text-gray-800';
+        }
+    }
+
+    [baseCostEl, exchangeRateEl, tariffRateEl].forEach(el => {
+        el.addEventListener('input', calculateCost);
+    });
+
+    calculateCost();
+
+    const tradeSurplusCtx = document.getElementById('tradeSurplusChart').getContext('2d');
+    new Chart(tradeSurplusCtx, {
+        type: 'bar',
+        data: {
+            labels: ['2020', '2021', '2022', '2023', '2024 (est.)'],
+            datasets: [{
+                label: '對美貿易順差 (億美元)',
+                data: [302, 491, 657, 702, 739],
+                backgroundColor: 'rgba(30, 64, 175, 0.7)',
+                borderColor: 'rgba(30, 64, 175, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '億美元'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    const strategyCards = document.querySelectorAll('.strategy-card');
+    const strategyDetailsEl = document.getElementById('strategy-details');
+
+    strategyCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const quadrant = card.dataset.quadrant;
+            const data = strategyData[quadrant];
+            
+            strategyDetailsEl.innerHTML = data.content;
+            strategyDetailsEl.classList.remove('hidden');
+            
+            strategyCards.forEach(c => c.classList.remove('ring-2', 'ring-blue-500'));
+            card.classList.add('ring-2', 'ring-blue-500');
+
+            strategyDetailsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+    
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === entry.target.id) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    }, { rootMargin: "-50% 0px -50% 0px" });
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+    
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>
