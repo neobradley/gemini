@@ -1,0 +1,629 @@
+import React, { useState } from 'react';
+import { 
+  FileText, 
+  Layout, 
+  Clock, 
+  MessageSquare, 
+  Search, 
+  Calendar, 
+  Settings, 
+  AlertTriangle, 
+  CheckCircle, 
+  XCircle, 
+  RefreshCw, 
+  Edit,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  Filter,
+  DollarSign,
+  List
+} from 'lucide-react';
+
+// --- Types ---
+type Tab = 'overview' | 'mockup' | 'specs' | 'timeline' | 'qa';
+
+// --- Components ---
+
+const Card = ({ title, children, className = "" }) => (
+  <div className={`bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden ${className}`}>
+    {title && (
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 font-medium text-slate-700 flex items-center">
+        {title}
+      </div>
+    )}
+    <div className="p-4">
+      {children}
+    </div>
+  </div>
+);
+
+const Badge = ({ children, color = "blue" }) => {
+  const colors = {
+    blue: "bg-blue-100 text-blue-800",
+    green: "bg-green-100 text-green-800",
+    yellow: "bg-amber-100 text-amber-800",
+    red: "bg-red-100 text-red-800",
+    gray: "bg-slate-100 text-slate-800",
+  };
+  return (
+    <span className={`px-2 py-0.5 rounded text-xs font-medium ${colors[color] || colors.gray}`}>
+      {children}
+    </span>
+  );
+};
+
+// --- Main Application ---
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: FileText },
+    { id: 'mockup', label: 'UI Mockup', icon: Layout },
+    { id: 'specs', label: 'Detailed Specs', icon: List },
+    { id: 'timeline', label: 'Time Logic', icon: Clock },
+    { id: 'qa', label: 'Q&A / Comments', icon: MessageSquare },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview': return <OverviewSection />;
+      case 'mockup': return <MockupSection />;
+      case 'specs': return <SpecsSection />;
+      case 'timeline': return <TimelineSection />;
+      case 'qa': return <QASection />;
+      default: return <OverviewSection />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-600 text-white p-2 rounded-lg">
+                <FileText size={20} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 leading-tight">BSLIVE-11945</h1>
+                <p className="text-xs text-slate-500">[BMS] Prize Pool Management | Draw List</p>
+              </div>
+            </div>
+            <div className="hidden md:flex space-x-4 text-sm">
+              <span className="flex items-center text-slate-600"><span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>Status: To Do</span>
+              <span className="flex items-center text-slate-600"><span className="w-2 h-2 rounded-full bg-orange-500 mr-2"></span>Priority: Medium</span>
+              <span className="flex items-center text-slate-600"><span className="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>Type: Story</span>
+            </div>
+          </div>
+          
+          {/* Navigation */}
+          <div className="flex space-x-1 overflow-x-auto no-scrollbar py-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as Tab)}
+                  className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap
+                    ${activeTab === tab.id 
+                      ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-700/10' 
+                      : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                >
+                  <Icon size={16} className="mr-2" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {renderContent()}
+      </main>
+    </div>
+  );
+}
+
+// --- Sub-Sections ---
+
+function OverviewSection() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-2 space-y-6">
+        <Card title="Requirement Summary">
+          <p className="text-slate-600 mb-4">
+            This ticket outlines the requirements for a new feature in the BMS (Backend Management System) to manage the "Mega Pool" lottery game. 
+            It involves creating a new list view for tracking draw results, managing manual number entries, and handling settlement statuses.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-3 bg-slate-50 rounded border border-slate-200">
+              <h3 className="font-semibold text-slate-800 mb-2 flex items-center"><List size={16} className="mr-2 text-blue-500"/> Core Feature</h3>
+              <p className="text-sm text-slate-600">New "Prize Pool Draw List" page under Prize Pool Management.</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded border border-slate-200">
+              <h3 className="font-semibold text-slate-800 mb-2 flex items-center"><Settings size={16} className="mr-2 text-blue-500"/> Operations</h3>
+              <p className="text-sm text-slate-600">Manual Number Entry, Void/Cancel Orders, Re-settlement.</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded border border-slate-200">
+              <h3 className="font-semibold text-slate-800 mb-2 flex items-center"><Clock size={16} className="mr-2 text-blue-500"/> Critical Timing</h3>
+              <p className="text-sm text-slate-600">Specific windows for manual entry (20:30-20:50) and strict settlement logic.</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded border border-slate-200">
+              <h3 className="font-semibold text-slate-800 mb-2 flex items-center"><DollarSign size={16} className="mr-2 text-blue-500"/> Currencies</h3>
+              <p className="text-sm text-slate-600">Supports K36V02VND and UFABETHB.</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="User Story">
+          <div className="prose prose-sm text-slate-600">
+            <p>
+              As a <strong>BMS Administrator</strong>,<br/>
+              I want to <strong>view and manage the Mega Pool draws</strong>,<br/>
+              So that I can <strong>monitor results, perform manual draws if needed, and handle settlement issues</strong>.
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      <div className="space-y-6">
+        <Card title="Ticket Details">
+          <ul className="space-y-3 text-sm">
+            <li className="flex justify-between">
+              <span className="text-slate-500">Key</span>
+              <span className="font-mono font-medium">BSLIVE-11945</span>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-slate-500">Reporter</span>
+              <span className="flex items-center">Olivia Lin</span>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-slate-500">Assignee</span>
+              <span className="flex items-center">Olivia Lin</span>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-slate-500">Created</span>
+              <span>02/Sep/25</span>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-slate-500">Updated</span>
+              <span>10/Nov/25</span>
+            </li>
+          </ul>
+        </Card>
+
+        <Card title="Related Links">
+           <a href="#" className="flex items-center text-blue-600 hover:underline text-sm mb-2">
+             <Layout size={14} className="mr-2" /> Axure Prototype
+           </a>
+           <a href="#" className="flex items-center text-blue-600 hover:underline text-sm">
+             <FileText size={14} className="mr-2" /> Google Sheet Specs
+           </a>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function MockupSection() {
+  return (
+    <div className="space-y-4">
+      <div className="bg-amber-50 border border-amber-200 p-4 rounded-md text-sm text-amber-800 flex items-start">
+        <Info className="shrink-0 mr-2 mt-0.5" size={16} />
+        <p>This is a functional visual representation of the requirements. It helps visualize the layout and columns described in the ticket.</p>
+      </div>
+
+      {/* Mock BMS Container */}
+      <div className="bg-slate-100 rounded-lg border border-slate-300 overflow-hidden shadow-lg">
+        {/* Mock Top Nav */}
+        <div className="bg-slate-800 text-slate-200 h-12 flex items-center px-4 text-xs">
+          <div className="font-bold mr-8 text-sm">BMS SYSTEM</div>
+          <div className="space-x-4">
+            <span>Dashboard</span>
+            <span>User Mgmt</span>
+            <span className="text-white font-bold border-b-2 border-blue-400 pb-3.5">Prize Pool Mgmt</span>
+            <span>Reports</span>
+          </div>
+        </div>
+
+        {/* Mock Content Area */}
+        <div className="flex h-[600px]">
+          {/* Mock Sidebar */}
+          <div className="w-48 bg-slate-900 text-slate-400 py-4 text-xs flex-shrink-0">
+            <div className="px-4 py-2 hover:bg-slate-800">Prize Pool List</div>
+            <div className="px-4 py-2 hover:bg-slate-800">Ticket History</div>
+            <div className="px-4 py-2 bg-blue-600 text-white font-medium">Draw List</div>
+            <div className="px-4 py-2 hover:bg-slate-800">Settings</div>
+          </div>
+
+          {/* Mock Main Page */}
+          <div className="flex-1 bg-white p-6 overflow-auto">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">Prize Pool Draw List</h2>
+
+            {/* Mock Filters */}
+            <div className="bg-slate-50 p-4 rounded border border-slate-200 mb-6 space-y-3">
+                <div className="flex flex-wrap gap-4 items-end">
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-600">Pool Type</label>
+                        <select className="block w-32 text-sm border-slate-300 rounded shadow-sm p-1.5 border bg-slate-100" disabled>
+                            <option>Mega Pool</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-600">Timezone</label>
+                        <select className="block w-32 text-sm border-slate-300 rounded shadow-sm p-1.5 border">
+                            <option>GMT+7 (Default)</option>
+                            <option>GMT+8</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-600">Date Range</label>
+                        <div className="flex items-center space-x-2">
+                             <input type="date" className="text-sm border p-1.5 rounded" value="2025-11-03" readOnly/>
+                             <span className="text-slate-400">-</span>
+                             <input type="date" className="text-sm border p-1.5 rounded" value="2025-11-10" readOnly/>
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-600">Issue No</label>
+                        <input type="text" placeholder="e.g. 2025110401" className="text-sm border p-1.5 rounded w-32"/>
+                    </div>
+                     <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-600">Currency</label>
+                        <div className="flex border rounded overflow-hidden">
+                            <button className="px-3 py-1.5 text-xs bg-blue-600 text-white">k36v02vnd</button>
+                            <button className="px-3 py-1.5 text-xs bg-white hover:bg-slate-50">ufabetthb</button>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-wrap gap-4 items-end">
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-600">Draw Status</label>
+                        <select className="block w-32 text-sm border-slate-300 rounded shadow-sm p-1.5 border">
+                            <option>All</option>
+                            <option>Not Drawn</option>
+                            <option>Drawn</option>
+                            <option>Delayed</option>
+                            <option>Voided</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-600">Settlement Status</label>
+                        <select className="block w-32 text-sm border-slate-300 rounded shadow-sm p-1.5 border">
+                            <option>All</option>
+                            <option>Unsettled</option>
+                            <option>Settled</option>
+                            <option>Settling</option>
+                            <option>Cancelled</option>
+                        </select>
+                    </div>
+                    <div className="flex-1"></div>
+                    <button className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700 flex items-center">
+                        <Search size={14} className="mr-2"/> Search
+                    </button>
+                    <button className="bg-white border border-slate-300 text-slate-700 px-4 py-1.5 rounded text-sm hover:bg-slate-50">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            {/* Mock Table */}
+            <div className="border border-slate-200 rounded overflow-x-auto">
+                <table className="min-w-full text-xs text-left">
+                    <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                        <tr>
+                            <th className="p-3 whitespace-nowrap">Issue No</th>
+                            <th className="p-3 whitespace-nowrap">Draw Time (+7)</th>
+                            <th className="p-3 whitespace-nowrap">Result</th>
+                            <th className="p-3 whitespace-nowrap">Stats (T/W/Amt)</th>
+                            <th className="p-3 whitespace-nowrap">Draw Status</th>
+                            <th className="p-3 whitespace-nowrap">Settle Status</th>
+                            <th className="p-3 whitespace-nowrap">Operations</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {/* Row 1: Normal Drawn */}
+                        <tr className="hover:bg-slate-50">
+                            <td className="p-3">2025111001<br/><span className="text-slate-400">2025-11-10</span></td>
+                            <td className="p-3">21:01:38</td>
+                            <td className="p-3 font-mono text-blue-600">02.13.22.25.36.40</td>
+                            <td className="p-3"><a href="#" className="text-blue-600 hover:underline">300 / 2 / 199,999</a></td>
+                            <td className="p-3"><Badge color="green">Drawn</Badge></td>
+                            <td className="p-3"><Badge color="green">Settled</Badge></td>
+                            <td className="p-3 space-x-2">
+                                <button className="text-red-600 hover:text-red-800 font-medium" title="Void / Cancel Order">Void</button>
+                            </td>
+                        </tr>
+                        {/* Row 2: Manual Entry Scenario */}
+                        <tr className="hover:bg-slate-50 bg-yellow-50/50">
+                            <td className="p-3">2025111002<br/><span className="text-slate-400">2025-11-10</span></td>
+                            <td className="p-3">-</td>
+                            <td className="p-3 text-slate-400">-</td>
+                            <td className="p-3 text-slate-400">- / - / -</td>
+                            <td className="p-3"><Badge color="yellow">Not Drawn</Badge></td>
+                            <td className="p-3"><Badge color="gray">Unsettled</Badge></td>
+                            <td className="p-3 space-x-2">
+                                <button className="text-blue-600 hover:text-blue-800 font-medium flex items-center" title="Available 20:30-20:50 only">
+                                    <Edit size={12} className="mr-1"/> Manual Entry
+                                </button>
+                            </td>
+                        </tr>
+                         {/* Row 3: Delayed */}
+                         <tr className="hover:bg-slate-50">
+                            <td className="p-3">2025110901<br/><span className="text-slate-400">2025-11-09</span></td>
+                            <td className="p-3">21:15:00</td>
+                            <td className="p-3 text-slate-400">-</td>
+                            <td className="p-3 text-slate-400">- / - / -</td>
+                            <td className="p-3"><Badge color="red">Delayed</Badge></td>
+                            <td className="p-3"><Badge color="gray">Unsettled</Badge></td>
+                            <td className="p-3 space-x-2">
+                                <button className="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                                    <Edit size={12} className="mr-1"/> Manual Entry
+                                </button>
+                                <button className="text-red-600 hover:text-red-800 font-medium">Void</button>
+                            </td>
+                        </tr>
+                         {/* Row 4: Drawn but failed settlement */}
+                         <tr className="hover:bg-slate-50">
+                            <td className="p-3">2025110801<br/><span className="text-slate-400">2025-11-08</span></td>
+                            <td className="p-3">21:05:12</td>
+                            <td className="p-3 font-mono text-blue-600">01.05.10.15.20.25</td>
+                            <td className="p-3 text-slate-400">- / - / -</td>
+                            <td className="p-3"><Badge color="green">Drawn</Badge></td>
+                            <td className="p-3"><Badge color="yellow">Unsettled</Badge></td>
+                            <td className="p-3 space-x-2">
+                                <button className="text-orange-600 hover:text-orange-800 font-medium flex items-center">
+                                    <RefreshCw size={12} className="mr-1"/> Re-settle
+                                </button>
+                                <button className="text-red-600 hover:text-red-800 font-medium">Void</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="mt-2 text-xs text-slate-500 text-right">
+                Showing 4 results
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SpecsSection() {
+  const [openSection, setOpenSection] = useState<string | null>('search');
+
+  const toggle = (id: string) => setOpenSection(openSection === id ? null : id);
+
+  const SpecItem = ({ id, title, children }) => (
+    <div className="border border-slate-200 rounded-lg mb-4 bg-white overflow-hidden">
+        <button 
+            onClick={() => toggle(id)}
+            className="w-full flex justify-between items-center px-4 py-3 bg-slate-50 hover:bg-slate-100 text-left"
+        >
+            <span className="font-semibold text-slate-800">{title}</span>
+            {openSection === id ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
+        </button>
+        {openSection === id && (
+            <div className="p-4 border-t border-slate-200 text-sm text-slate-600 space-y-2">
+                {children}
+            </div>
+        )}
+    </div>
+  );
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <SpecItem id="search" title="1. Search Criteria">
+         <ul className="list-disc list-outside ml-4 space-y-1">
+             <li><strong>Pool Type:</strong> Fixed to "Mega Pool" (Dropdown).</li>
+             <li><strong>Timezone:</strong> Default GMT+7, selectable.</li>
+             <li><strong>Time Range:</strong> Date Pickers. Default: Start = -8 days, End = Today.</li>
+             <li><strong>Issue No:</strong> Text Input (e.g., 2025090201). Supports partial (7 digits) or full (9 digits).</li>
+             <li><strong>Draw Status:</strong> All / Already Drawn / Not Drawn / Draw Delayed / Voided (Empty Open).</li>
+             <li><strong>Settlement Status:</strong> All / Settled / Unsettled / Settling / Cancelled.</li>
+         </ul>
+      </SpecItem>
+
+      <SpecItem id="columns" title="2. List Columns & Display Logic">
+          <ul className="list-disc list-outside ml-4 space-y-2">
+             <li><strong>Key Dates:</strong> Draw Time (Main sort), Settlement Time, Manual Entry Time.</li>
+             <li><strong>Result:</strong> 6 numbers (e.g. 02.13.22.25.36.40), sorted ascending.</li>
+             <li><strong>Stats (Total/Win/Amt):</strong> 
+                <ul className="list-disc ml-4 mt-1 text-slate-500">
+                    <li>Format: 300 / <span className="text-orange-500">2</span> / <span className="text-orange-500">199,999</span></li>
+                    <li>Before Draw/Settle: Display as <code className="bg-slate-100 px-1">- / - / -</code> (Not clickable).</li>
+                    <li>After Settle: Clickable hyperlink to detailed stats popup.</li>
+                </ul>
+             </li>
+             <li><strong>Status Definitions:</strong>
+                 <ul className="list-disc ml-4 mt-1 text-slate-500">
+                     <li><strong>Delayed:</strong> If not drawn 10 mins after schedule (e.g., {'>'} 21:10).</li>
+                     <li><strong>Draw Time:</strong> Format 2025/09/02 21:01:38.</li>
+                 </ul>
+             </li>
+         </ul>
+      </SpecItem>
+
+      <SpecItem id="manual" title="3. Manual Entry & Pre-Draw Trial">
+          <div className="p-3 bg-blue-50 text-blue-800 rounded mb-2">
+            <strong>Time Window:</strong> 20:30 - 20:50 (GMT+7)
+          </div>
+          <p><strong>Logic:</strong></p>
+          <ul className="list-disc list-outside ml-4 mb-2">
+              <li>If Manual Entry is used (or Trial + Manual Entry), it takes priority.</li>
+              <li>If no manual entry by 20:50, system draws using default parameters.</li>
+          </ul>
+          <p><strong>Pre-Draw Trial (Calculation):</strong></p>
+          <ul className="list-disc list-outside ml-4">
+              <li>Shows Snapshot (20:20-20:29) data: Issue, Time, Pool Amount, Ticket Count.</li>
+              <li>Calculates top 3 results based on 3 params: <strong>Payout Rate, Win Rate, Total Payout Amount</strong>.</li>
+              <li>Sorting Priority: Total Payout {'>'} Payout Rate {'>'} Win Rate.</li>
+              <li>User selects one result {'->'} Click [Confirm] to use as Manual Draw Result.</li>
+          </ul>
+      </SpecItem>
+
+      <SpecItem id="ops" title="4. Operations">
+          <table className="w-full text-xs border-collapse border border-slate-300">
+              <thead className="bg-slate-100">
+                  <tr>
+                      <th className="border border-slate-300 p-2">Action</th>
+                      <th className="border border-slate-300 p-2">Condition</th>
+                      <th className="border border-slate-300 p-2">Effect</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td className="border border-slate-300 p-2 font-medium text-red-600">Void / Empty Open</td>
+                      <td className="border border-slate-300 p-2">
+                        Not Drawn / Delayed OR <br/>
+                        (Drawn + Settled/Unsettled)
+                      </td>
+                      <td className="border border-slate-300 p-2">Cancels draw. Recovers prize money if already settled.</td>
+                  </tr>
+                  <tr>
+                      <td className="border border-slate-300 p-2 font-medium text-orange-600">Re-settle</td>
+                      <td className="border border-slate-300 p-2">Drawn + (Unsettled / Settling)</td>
+                      <td className="border border-slate-300 p-2">Re-runs settlement logic. Disabled if status becomes Settled.</td>
+                  </tr>
+                  <tr>
+                      <td className="border border-slate-300 p-2 font-medium text-blue-600">Manual Entry</td>
+                      <td className="border border-slate-300 p-2">
+                          (Not Drawn + Unsettled) within 20:30-20:50 OR <br/>
+                          Delayed + Unsettled
+                      </td>
+                      <td className="border border-slate-300 p-2">Opens manual entry / trial calculation modal.</td>
+                  </tr>
+              </tbody>
+          </table>
+      </SpecItem>
+    </div>
+  );
+}
+
+function TimelineSection() {
+    const events = [
+        { time: "20:20 - 20:29", title: "Snapshot Window", desc: "System takes snapshot of pool amount and tickets.", type: "system" },
+        { time: "20:30", title: "Manual Entry Opens", desc: "Admins can access 'Manual Entry' and 'Trial Calculation'. Statistics remain empty.", type: "action" },
+        { time: "20:50", title: "Manual Entry Closes", desc: "Deadline for manual intervention. If none, system logic takes over.", type: "critical" },
+        { time: "21:00", title: "Official Draw Time", desc: "Draw result is finalized. If not drawn by 21:10, status becomes 'Delayed'.", type: "system" },
+        { time: "21:00+", title: "Settlement & Payout", desc: "Winning tickets identified, money distributed. Stats (300/2/199k) become visible.", type: "system" },
+    ];
+
+    return (
+        <div className="max-w-4xl mx-auto py-8">
+            <h3 className="text-lg font-bold text-slate-800 mb-8 text-center">Daily Draw Cycle (GMT+7)</h3>
+            <div className="relative">
+                {/* Vertical Line */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-slate-200"></div>
+
+                {events.map((evt, idx) => (
+                    <div key={idx} className={`relative z-10 flex items-center mb-12 ${idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}>
+                        {/* Time Bubble */}
+                        <div className="w-1/2 flex justify-end px-8">
+                           {idx % 2 === 0 && (
+                               <div className="text-right">
+                                   <div className="text-xl font-bold text-slate-800">{evt.time}</div>
+                                   <div className={`text-xs font-bold uppercase tracking-wider ${
+                                       evt.type === 'critical' ? 'text-red-500' : 
+                                       evt.type === 'action' ? 'text-blue-500' : 'text-slate-400'
+                                   }`}>{evt.type}</div>
+                               </div>
+                           )}
+                        </div>
+                        
+                        {/* Center Dot */}
+                        <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center bg-white
+                            ${evt.type === 'critical' ? 'border-red-500' : 'border-blue-500'}
+                        `}>
+                            <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                        </div>
+
+                        {/* Content Card */}
+                        <div className="w-1/2 px-8">
+                           {idx % 2 !== 0 ? (
+                               <div className="text-right">
+                                    <div className="text-xl font-bold text-slate-800">{evt.time}</div>
+                                    <div className={`text-xs font-bold uppercase tracking-wider ${
+                                       evt.type === 'critical' ? 'text-red-500' : 
+                                       evt.type === 'action' ? 'text-blue-500' : 'text-slate-400'
+                                   }`}>{evt.type}</div>
+                               </div> 
+                           ) : (
+                               <Card className="max-w-sm">
+                                   <h4 className="font-bold text-slate-800">{evt.title}</h4>
+                                   <p className="text-sm text-slate-600 mt-1">{evt.desc}</p>
+                               </Card>
+                           )}
+                            {idx % 2 !== 0 && (
+                               <Card className="max-w-sm ml-auto mt-2">
+                                   <h4 className="font-bold text-slate-800">{evt.title}</h4>
+                                   <p className="text-sm text-slate-600 mt-1">{evt.desc}</p>
+                               </Card>
+                           )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function QASection() {
+    const qas = [
+        {
+            q: "Does Manual Entry need to be blocked if outside the snapshot time (20:20-20:29)?",
+            a: "Yes. System should block manual entry if the snapshot conditions weren't met. If stopped, alert the user and they must use 'Void/Cancel Order'.",
+            user: "Eva Su"
+        },
+        {
+            q: "What happens during 'Void/Cancel Order' (Empty Open)?",
+            a: "Available after 21:00. It cancels the draw. If performed after settlement, it must recover/retract all distributed prize money. Status becomes 'Cancelled'.",
+            user: "Eva Su / Jacob"
+        },
+        {
+            q: "When do the statistics (Total Tickets / Win Amount) appear?",
+            a: "Before 20:30: Empty. \n20:30 - 21:00: Shows Total Tickets (e.g., 300 / - / -). \nAfter 21:00 (Settlement): Shows full stats (300 / 20 / 4000).",
+            user: "Eva Su"
+        },
+        {
+            q: "How does the Pre-Draw Trial logic work?",
+            a: "Available 20:30-20:50. Ignores Logic 1-3 constraints. Calculates top 3 results based on Payout % > Win Rate %. If 'Show All' is clicked, shows remaining 97 sorted results.",
+            user: "Jacob Hsiao"
+        },
+        {
+            q: "What is the definition of 'Draw Delayed'?",
+            a: "If the current time is 10 minutes past the draw time (21:10) and no result exists, the status becomes 'Draw Delayed'. Manual Entry is allowed in this state.",
+            user: "Eva Su / Jacob"
+        }
+    ];
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {qas.map((qa, i) => (
+                <div key={i} className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                    <div className="flex items-start mb-4">
+                        <div className="bg-blue-100 p-2 rounded-full mr-3 text-blue-600">
+                            <MessageSquare size={18} />
+                        </div>
+                        <h4 className="font-bold text-slate-800 text-sm mt-1">{qa.q}</h4>
+                    </div>
+                    <div className="pl-12">
+                        <p className="text-slate-600 text-sm whitespace-pre-line">{qa.a}</p>
+                        <div className="mt-3 text-xs text-slate-400 font-medium flex items-center">
+                            <span className="w-2 h-2 bg-slate-300 rounded-full mr-2"></span>
+                            Source: {qa.user}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
