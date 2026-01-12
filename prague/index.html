@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>布拉格四天三夜：年輕人自由行地圖</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 25px;
+            background-color: #ddd;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        button.active {
+            background-color: #d35400; /* 布拉格紅屋頂色 */
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover:not(.active) {
+            background-color: #ccc;
+        }
+
+        .canvas-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        canvas {
+            border: 1px solid #eee;
+            border-radius: 10px;
+        }
+
+        .legend {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            gap: 20px;
+        }
+        .legend span {
+            display: flex;
+            align-items: center;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🇨🇿 布拉格 4天3夜 行程地圖</h1>
+    <p>輕鬆拍照・網紅打卡・素食友善</p>
+
+    <div class="controls">
+        <button onclick="loadDay(1)" id="btn1" class="active">Day 1: 舊城童話</button>
+        <button onclick="loadDay(2)" id="btn2">Day 2: 城堡美景</button>
+        <button onclick="loadDay(3)" id="btn3">Day 3: 河岸漫遊</button>
+        <button onclick="loadDay(4)" id="btn4">Day 4: 悠閒返程</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="tripCanvas" width="600" height="700"></canvas>
+    </div>
+
+    <div class="legend">
+        <span><span class="dot" style="background:#d35400"></span> 景點 (Sight)</span>
+        <span><span class="dot" style="background:#27ae60"></span> 素食餐廳 (Veg Food)</span>
+        <span><span class="dot" style="background:#3498db"></span> 交通/活動 (Activity)</span>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('tripCanvas');
+        const ctx = canvas.getContext('2d');
+        let currentDay = 1;
+
+        // 行程數據結構
+        const itineraryData = {
+            1: {
+                title: "Day 1: 舊城區的浪漫與夜景",
+                stops: [
+                    { time: "14:00", title: "瓦茨拉夫廣場", desc: "抵達、感受城市熱鬧氛圍", type: "sight" },
+                    { time: "15:00", title: "火藥塔 & 市民會館", desc: "地標打卡，欣賞新藝術風格", type: "sight" },
+                    { time: "16:00", title: "舊城廣場 & 煙囪捲", desc: "必吃 Trdelník 甜點，看天文鐘", type: "sight" },
+                    { time: "18:00", title: "查理大橋 (日落)", desc: "觸摸雕像許願，絕美河景", type: "sight" },
+                    { time: "19:30", title: "晚餐: Maitrea", desc: "禪意風格素食，美味捷克菜改良", type: "food" }
+                ]
+            },
+            2: {
+                title: "Day 2: 城堡區與文青牆",
+                stops: [
+                    { time: "10:00", title: "佩特任山纜車", desc: "搭纜車上山，眺望紅屋頂全景", type: "transport" },
+                    { time: "12:30", title: "午餐: Vegan's Prague", desc: "城堡腳下的景觀素食漢堡", type: "food" },
+                    { time: "14:00", title: "布拉格城堡 (外部)", desc: "聖維特大教堂合影 (不進博物館)", type: "sight" },
+                    { time: "16:00", title: "小城區漫步", desc: "沿途下坡，逛可愛小店", type: "transport" },
+                    { time: "17:30", title: "列儂牆 (Lennon Wall)", desc: "塗鴉牆拍照，年輕人最愛", type: "sight" },
+                    { time: "19:00", title: "晚餐: Lehká Hlava", desc: "星空天花板素食餐廳 (需預約)", type: "food" }
+                ]
+            },
+            3: {
+                title: "Day 3: 伏爾塔瓦河與現代藝術",
+                stops: [
+                    { time: "10:30", title: "跳舞的房子", desc: "獨特扭曲建築，網紅打卡點", type: "sight" },
+                    { time: "13:00", title: "午餐: 河岸市集/餐車", desc: "享受河邊輕鬆氛圍", type: "food" },
+                    { time: "14:30", title: "租借腳踏船 (Pedal Boat)", desc: "從河面上看查理大橋，超Chill", type: "activity" },
+                    { time: "16:30", title: "Na Příkopě 購物街", desc: "逛街購物，買紀念品", type: "activity" },
+                    { time: "19:00", title: "晚餐: Etnosvět", desc: "精緻國際素食料理", type: "food" },
+                    { time: "21:00", title: "酒吧/夜店 (自由選)", desc: "Hemingway Bar 或 Karlovy Lázně", type: "activity" }
+                ]
+            },
+            4: {
+                title: "Day 4: 早午餐與告別",
+                stops: [
+                    { time: "10:00", title: "早午餐: Café Savoy", desc: "華麗歐式早餐體驗", type: "food" },
+                    { time: "11:30", title: "哈維爾市集", desc: "買新鮮水果與最後紀念品", type: "sight" },
+                    { time: "13:00", title: "前往機場", desc: "搭乘 Uber/Bolt 準備返程", type: "transport" }
+                ]
+            }
+        };
+
+        function drawItinerary(day) {
+            // 清空畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const data = itineraryData[day];
+            const stops = data.stops;
+            
+            // 繪製背景裝飾 (淡色線條)
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for(let i=0; i<canvas.width; i+=20) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+
+            // 繪製標題
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 24px Helvetica';
+            ctx.fillText(data.title, 30, 50);
+            
+            // 繪製路線 (連接線)
+            ctx.beginPath();
+            ctx.moveTo(100, 90);
+            ctx.lineTo(100, 100 + (stops.length - 1) * 110);
+            ctx.strokeStyle = '#bdc3c7';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([10, 5]); // 虛線效果
+            ctx.stroke();
+            ctx.setLineDash([]); // 重置為實線
+
+            // 循環繪製每個點
+            stops.forEach((stop, index) => {
+                const y = 100 + index * 110;
+                const x = 100;
+
+                // 1. 繪製節點圓圈
+                ctx.beginPath();
+                ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                
+                // 根據類型決定顏色
+                let color = '#d35400'; // Default sight (Orange)
+                if (stop.type === 'food') color = '#27ae60'; // Green
+                if (stop.type === 'transport' || stop.type === 'activity') color = '#3498db'; // Blue
+                
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // 2. 繪製時間 (左側)
+                ctx.fillStyle = '#7f8c8d';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(stop.time, x - 30, y + 5);
+
+                // 3. 繪製內容卡片 (右側)
+                const cardX = x + 40;
+                const cardY = y - 35;
+                const cardW = 420;
+                const cardH = 70;
+
+                // 卡片陰影
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                // 卡片背景
+                ctx.fillStyle = 'white';
+                ctx.fillRect(cardX, cardY, cardW, cardH);
+                
+                // 左側色彩條
+                ctx.fillStyle = color;
+                ctx.fillRect(cardX, cardY, 5, cardH);
+
+                ctx.shadowColor = 'transparent'; // Reset shadow
+
+                // 4. 文字內容
+                ctx.textAlign = 'left';
+                
+                // 標題
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(stop.title, cardX + 20, cardY + 25);
+                
+                // 描述
+                ctx.fillStyle = '#7f8c8d';
+                ctx.font = '14px Arial';
+                ctx.fillText(stop.desc, cardX + 20, cardY + 50);
+                
+                // 圖示 (簡單 Emoji)
+                let icon = '📸';
+                if (stop.type === 'food') icon = '🥗';
+                if (stop.type === 'transport') icon = '🚃';
+                if (stop.type === 'activity') icon = '🚲';
+                
+                ctx.font = '24px Arial';
+                ctx.fillText(icon, cardX + cardW - 40, cardY + 45);
+            });
+        }
+
+        function loadDay(day) {
+            currentDay = day;
+            
+            // 更新按鈕樣式
+            for(let i=1; i<=4; i++) {
+                document.getElementById('btn'+i).classList.remove('active');
+            }
+            document.getElementById('btn'+day).classList.add('active');
+
+            // 執行動畫繪製
+            drawItinerary(day);
+        }
+
+        // 初始加載
+        loadDay(1);
+
+    </script>
+</body>
+</html>
