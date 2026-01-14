@@ -167,46 +167,46 @@
             }
         };
 
-        // 行程數據結構 (增加多語言與 query)
+        // 行程數據結構 (增加詳細描述與素食推薦)
         const itineraryData = {
             1: {
                 title: { zh: "Day 1: 舊城區的浪漫與夜景", en: "Day 1: Romance of Old Town" },
                 stops: [
-                    { time: "14:00", title: {zh: "瓦茨拉夫廣場", en: "Wenceslas Square"}, desc: {zh: "抵達、感受城市熱鬧氛圍", en: "Arrival, feel the city vibe"}, type: "sight", query: "Wenceslas Square Prague" },
-                    { time: "15:00", title: {zh: "火藥塔 & 市民會館", en: "Powder Tower"}, desc: {zh: "地標打卡，欣賞新藝術風格", en: "Landmark photo spot, Art Nouveau"}, type: "sight", query: "Powder Tower Prague" },
-                    { time: "16:00", title: {zh: "舊城廣場 & 煙囪捲", en: "Old Town Square"}, desc: {zh: "必吃 Trdelník 甜點，看天文鐘", en: "Try Trdelník, see Astronomical Clock"}, type: "sight", query: "Old Town Square Prague" },
-                    { time: "18:00", title: {zh: "查理大橋 (日落)", en: "Charles Bridge (Sunset)"}, desc: {zh: "觸摸雕像許願，絕美河景", en: "Touch statues for luck, river view"}, type: "sight", query: "Charles Bridge Prague" },
-                    { time: "19:30", title: {zh: "晚餐: Maitrea", en: "Dinner: Maitrea"}, desc: {zh: "禪意風格素食，美味捷克菜改良", en: "Zen style vegetarian, Czech fusion"}, type: "food", query: "Maitrea restaurace Prague" }
+                    { time: "14:00", title: {zh: "瓦茨拉夫廣場", en: "Wenceslas Square"}, desc: {zh: "布拉格的商業心臟，融合歷史建築與現代活力。", en: "Bustling city hub, blend of history and modern vibes."}, type: "sight", query: "Wenceslas Square Prague" },
+                    { time: "15:00", title: {zh: "火藥塔 & 市民會館", en: "Powder Tower"}, desc: {zh: "哥德式城門地標，欣賞新藝術風格的精緻細節。", en: "Gothic gate landmark, admire Art Nouveau details."}, type: "sight", query: "Powder Tower Prague" },
+                    { time: "16:00", title: {zh: "舊城廣場 & 煙囪捲", en: "Old Town Square"}, desc: {zh: "必看整點天文鐘。推薦試試路邊攤的肉桂煙囪捲。", en: "Watch the Clock. Try the local cinnamon Trdelník."}, type: "sight", query: "Old Town Square Prague" },
+                    { time: "18:00", title: {zh: "查理大橋 (日落)", en: "Charles Bridge (Sunset)"}, desc: {zh: "30尊聖徒雕像間漫步，日落時分的河景最迷人。", en: "Walk among 30 statues, best river views at sunset."}, type: "sight", query: "Charles Bridge Prague" },
+                    { time: "19:30", title: {zh: "晚餐: Maitrea", en: "Dinner: Maitrea"}, desc: {zh: "禪意風素食。推薦：老布拉格傳統素食拼盤。", en: "Zen style. Rec: Old Prague Traditional Vegan Plate."}, type: "food", query: "Maitrea restaurace Prague" }
                 ]
             },
             2: {
                 title: { zh: "Day 2: 城堡區與文青牆", en: "Day 2: Castle & Lennon Wall" },
                 stops: [
-                    { time: "10:00", title: {zh: "佩特任山纜車", en: "Petřín Funicular"}, desc: {zh: "搭纜車上山，眺望紅屋頂全景", en: "Ride up for panoramic roof views"}, type: "transport", query: "Petrin Funicular Prague" },
-                    { time: "12:30", title: {zh: "午餐: Vegan's Prague", en: "Lunch: Vegan's Prague"}, desc: {zh: "城堡腳下的景觀素食漢堡", en: "Vegan burgers with castle view"}, type: "food", query: "Vegan's Prague" },
-                    { time: "14:00", title: {zh: "布拉格城堡 (外部)", en: "Prague Castle"}, desc: {zh: "聖維特大教堂合影", en: "St. Vitus Cathedral photo op"}, type: "sight", query: "Prague Castle" },
-                    { time: "16:00", title: {zh: "小城區漫步", en: "Lesser Town Stroll"}, desc: {zh: "沿途下坡，逛可愛小店", en: "Walk downhill, cute shops"}, type: "transport", query: "Malá Strana Prague" },
-                    { time: "17:30", title: {zh: "列儂牆", en: "Lennon Wall"}, desc: {zh: "塗鴉牆拍照，年輕人最愛", en: "Graffiti wall, peace symbol"}, type: "sight", query: "Lennon Wall Prague" },
-                    { time: "19:00", title: {zh: "晚餐: Lehká Hlava", en: "Dinner: Lehká Hlava"}, desc: {zh: "星空天花板素食餐廳", en: "Clear Head vegetarian restaurant"}, type: "food", query: "Lehká Hlava Prague" }
+                    { time: "10:00", title: {zh: "佩特任山纜車", en: "Petřín Funicular"}, desc: {zh: "搭乘復古纜車上山，俯瞰布拉格紅屋頂全景。", en: "Ride funicular up the hill for panoramic roof views."}, type: "transport", query: "Petrin Funicular Prague" },
+                    { time: "12:30", title: {zh: "午餐: Vegan's Prague", en: "Lunch: Vegan's Prague"}, desc: {zh: "城堡下絕美景觀。推薦：甜菜根素食漢堡。", en: "Castle view. Rec: Beetroot Burger & Zucchini Lasagna."}, type: "food", query: "Vegan's Prague" },
+                    { time: "14:00", title: {zh: "布拉格城堡", en: "Prague Castle"}, desc: {zh: "世界最大古堡群，必訪莊嚴的聖維特大教堂。", en: "Largest castle complex, visit St. Vitus Cathedral."}, type: "sight", query: "Prague Castle" },
+                    { time: "16:00", title: {zh: "小城區漫步", en: "Lesser Town Stroll"}, desc: {zh: "沿涅魯達街下坡，探索巴洛克式巷弄小店。", en: "Walk down Nerudova St., explore Baroque alleys."}, type: "transport", query: "Malá Strana Prague" },
+                    { time: "17:30", title: {zh: "列儂牆", en: "Lennon Wall"}, desc: {zh: "象徵愛與和平的彩色塗鴉牆，文青必拍。", en: "Colorful graffiti wall symbolizing love and peace."}, type: "sight", query: "Lennon Wall Prague" },
+                    { time: "19:00", title: {zh: "晚餐: Lehká Hlava", en: "Dinner: Lehká Hlava"}, desc: {zh: "夢幻星空房。推薦：墨西哥黑豆飯與玉米片。", en: "Starry ceiling. Rec: Mexican Bowl with Nachos."}, type: "food", query: "Lehká Hlava Prague" }
                 ]
             },
             3: {
                 title: { zh: "Day 3: 伏爾塔瓦河與現代藝術", en: "Day 3: Vltava River & Art" },
                 stops: [
-                    { time: "10:30", title: {zh: "跳舞的房子", en: "Dancing House"}, desc: {zh: "獨特扭曲建築，網紅打卡點", en: "Unique architecture photo spot"}, type: "sight", query: "Dancing House Prague" },
-                    { time: "13:00", title: {zh: "午餐: 河岸市集", en: "Lunch: River Market"}, desc: {zh: "享受河邊輕鬆氛圍", en: "Relaxing riverside vibes"}, type: "food", query: "Naplavka Farmers Market" },
-                    { time: "14:30", title: {zh: "租借腳踏船", en: "Pedal Boat Rental"}, desc: {zh: "從河面上看查理大橋，超Chill", en: "View bridge from the river"}, type: "activity", query: "Slovansky Island Boat Rental" },
-                    { time: "16:30", title: {zh: "Na Příkopě 購物街", en: "Na Příkopě Shopping"}, desc: {zh: "逛街購物，買紀念品", en: "Shopping and souvenirs"}, type: "activity", query: "Na Prikope Prague" },
-                    { time: "19:00", title: {zh: "晚餐: Etnosvět", en: "Dinner: Etnosvět"}, desc: {zh: "精緻國際素食料理", en: "International veg cuisine"}, type: "food", query: "Etnosvet Prague" },
-                    { time: "21:00", title: {zh: "酒吧: Hemingway", en: "Bar: Hemingway"}, desc: {zh: "享受布拉格夜生活", en: "Enjoy Prague nightlife"}, type: "activity", query: "Hemingway Bar Prague" }
+                    { time: "10:30", title: {zh: "跳舞的房子", en: "Dancing House"}, desc: {zh: "前衛解構主義建築，由Gehry設計的扭曲之美。", en: "Deconstructivist icon designed by Frank Gehry."}, type: "sight", query: "Dancing House Prague" },
+                    { time: "13:00", title: {zh: "午餐: 河岸市集", en: "Lunch: River Market"}, desc: {zh: "週六農夫市集。推薦：烤起司三明治與新鮮莓果。", en: "Farmers market. Rec: Grilled Cheese & fresh berries."}, type: "food", query: "Naplavka Farmers Market" },
+                    { time: "14:30", title: {zh: "租借腳踏船", en: "Pedal Boat Rental"}, desc: {zh: "踩著天鵝船到河中央，用不同視角看查理大橋。", en: "Rent a swan boat to view the bridge from the water."}, type: "activity", query: "Slovansky Island Boat Rental" },
+                    { time: "16:30", title: {zh: "Na Příkopě 購物街", en: "Na Příkopě Shopping"}, desc: {zh: "布拉格的香榭大道，購買保養品與水晶紀念品。", en: "Prague's main boulevard for shopping and souvenirs."}, type: "activity", query: "Na Prikope Prague" },
+                    { time: "19:00", title: {zh: "晚餐: Etnosvět", en: "Dinner: Etnosvět"}, desc: {zh: "獲獎無數的國際素食。推薦：純素韃靼牛排。", en: "Award-winning. Rec: Vegan Tartare & Risotto."}, type: "food", query: "Etnosvet Prague" },
+                    { time: "21:00", title: {zh: "酒吧: Hemingway", en: "Bar: Hemingway"}, desc: {zh: "頂級調酒體驗，亦提供多款精緻無酒精特調。", en: "Top-tier cocktails, also offers great Mocktails."}, type: "activity", query: "Hemingway Bar Prague" }
                 ]
             },
             4: {
                 title: { zh: "Day 4: 早午餐與告別", en: "Day 4: Brunch & Farewell" },
                 stops: [
-                    { time: "10:00", title: {zh: "早午餐: Café Savoy", en: "Brunch: Café Savoy"}, desc: {zh: "華麗歐式早餐體驗", en: "Fancy European breakfast"}, type: "food", query: "Cafe Savoy Prague" },
-                    { time: "11:30", title: {zh: "哈維爾市集", en: "Havel's Market"}, desc: {zh: "買新鮮水果與最後紀念品", en: "Fresh fruit and souvenirs"}, type: "sight", query: "Havelske trziste Prague" },
-                    { time: "13:00", title: {zh: "前往機場", en: "To Airport"}, desc: {zh: "搭乘 Uber/Bolt 準備返程", en: "Take Uber/Bolt to airport"}, type: "transport", query: "Vaclav Havel Airport Prague" }
+                    { time: "10:00", title: {zh: "早午餐: Café Savoy", en: "Brunch: Café Savoy"}, desc: {zh: "新文藝復興風格。推薦：法式吐司與熱巧克力。", en: "Neo-Renaissance style. Rec: French Toast & Cocoa."}, type: "food", query: "Cafe Savoy Prague" },
+                    { time: "11:30", title: {zh: "哈維爾市集", en: "Havel's Market"}, desc: {zh: "百年露天市集，購買在地蜂蜜、水果與木偶。", en: "Historic open-air market for honey, fruit & puppets."}, type: "sight", query: "Havelske trziste Prague" },
+                    { time: "13:00", title: {zh: "前往機場", en: "To Airport"}, desc: {zh: "建議預留3小時辦理退稅。搭乘 Bolt 最方便。", en: "Allow 3 hrs for tax refund. Take Bolt for comfort."}, type: "transport", query: "Vaclav Havel Airport Prague" }
                 ]
             }
         };
@@ -319,9 +319,11 @@
                 ctx.font = 'bold 18px Arial';
                 ctx.fillText(stop.title[currentLang], cardX + 20, cardY + 25);
                 
-                // 描述
+                // 描述 (調整字體大小以容納較長的描述)
                 ctx.fillStyle = '#7f8c8d';
-                ctx.font = '13px Arial';
+                ctx.font = '12px Arial'; // 微調字體大小 13px -> 12px
+                // 為了防止文字過長重疊按鈕，簡單截斷或依靠這行足夠寬
+                // 440 width - 140 buttons - 20 padding = ~280px available
                 ctx.fillText(stop.desc[currentLang], cardX + 20, cardY + 50);
 
                 // 5. 繪製互動按鈕 (Canvas內繪製按鈕)
