@@ -6,97 +6,106 @@
     <title>Prague 2026</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f4f4f4;
             display: flex;
             flex-direction: column;
             align-items: center;
             margin: 0;
-            padding: 20px;
+            padding: 20px 10px; /* 減少手機版左右 padding */
             color: #333;
         }
 
-        /* 頂部導航列包含標題與語言切換 */
+        /* 頂部導航列 */
         .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            max-width: 600px;
-            margin-bottom: 10px;
+            max-width: 800px; /* 放寬最大寬度以適應平板 */
+            margin-bottom: 15px;
         }
 
         h1 {
             color: #2c3e50;
             margin: 0;
-            font-size: 24px;
+            font-size: clamp(20px, 5vw, 28px); /* 響應式字體大小 */
         }
 
         .lang-btn {
             background-color: #34495e;
             color: white;
             border: none;
-            padding: 5px 15px;
-            border-radius: 15px;
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 14px;
+            white-space: nowrap;
         }
 
         .subtitle {
             margin-bottom: 20px;
             color: #666;
+            text-align: center;
+            font-size: 14px;
         }
 
         .controls {
             margin-bottom: 20px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
 
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
+        button.day-btn {
+            padding: 10px 16px;
+            font-size: 15px;
             cursor: pointer;
             border: none;
             border-radius: 25px;
-            background-color: #ddd;
-            transition: all 0.3s ease;
-            font-weight: bold;
+            background-color: #e0e0e0;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            color: #555;
+            min-width: 70px; /* 確保按鈕有最小寬度 */
         }
 
-        button.active {
-            background-color: #d35400; /* 布拉格紅屋頂色 */
+        button.day-btn.active {
+            background-color: #d35400;
             color: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(211, 84, 0, 0.3);
+            transform: translateY(-1px);
         }
 
-        button:hover:not(.active) {
+        button.day-btn:hover:not(.active) {
             background-color: #ccc;
         }
 
         .canvas-container {
             background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 0; /* 移除 padding 讓 canvas 填滿 */
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             position: relative;
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden; /* 確保圓角 */
         }
 
         canvas {
-            border: 1px solid #eee;
-            border-radius: 10px;
-            /* 讓滑鼠在 Canvas 上也能有正確的互動感 */
-            cursor: default;
+            display: block; /* 移除 canvas 底部預設間隙 */
+            width: 100%;
+            /* cursor 由 JS 控制 */
         }
 
         .legend {
-            margin-top: 15px;
-            font-size: 14px;
+            margin-top: 20px;
+            font-size: 13px;
             color: #666;
             display: flex;
-            gap: 20px;
+            gap: 15px;
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -108,7 +117,7 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            margin-right: 5px;
+            margin-right: 6px;
             display: inline-block;
         }
     </style>
@@ -122,14 +131,14 @@
     <p class="subtitle" id="sub-title">輕鬆拍照・網紅打卡・素食友善</p>
 
     <div class="controls">
-        <button onclick="loadDay(1)" id="btn1" class="active">Day 1</button>
-        <button onclick="loadDay(2)" id="btn2">Day 2</button>
-        <button onclick="loadDay(3)" id="btn3">Day 3</button>
-        <button onclick="loadDay(4)" id="btn4">Day 4</button>
+        <button onclick="loadDay(1)" id="btn1" class="day-btn active">Day 1</button>
+        <button onclick="loadDay(2)" id="btn2" class="day-btn">Day 2</button>
+        <button onclick="loadDay(3)" id="btn3" class="day-btn">Day 3</button>
+        <button onclick="loadDay(4)" id="btn4" class="day-btn">Day 4</button>
     </div>
 
-    <div class="canvas-container">
-        <canvas id="tripCanvas" width="600" height="750"></canvas>
+    <div class="canvas-container" id="canvasContainer">
+        <canvas id="tripCanvas"></canvas>
     </div>
 
     <div class="legend">
@@ -140,14 +149,14 @@
 
     <script>
         const canvas = document.getElementById('tripCanvas');
+        const container = document.getElementById('canvasContainer');
         const ctx = canvas.getContext('2d');
         let currentDay = 1;
-        let currentLang = 'zh'; // 'zh' or 'en'
-        
-        // 用來儲存按鈕的點擊區域，實現Canvas內的連結點擊
-        let hitRegions = []; 
+        let currentLang = 'zh';
+        let hitRegions = [];
+        let imageCache = {}; // 緩存圖片物件
 
-        // 文本資源
+        // UI 文本
         const uiText = {
             zh: {
                 mainTitle: "布拉格 4天3夜",
@@ -167,115 +176,203 @@
             }
         };
 
-        // 行程數據結構 (增加詳細描述與素食推薦)
+        // 行程數據 (加入圖片 URL)
+        // 使用 Unsplash Source 作為示範圖片
         const itineraryData = {
             1: {
                 title: { zh: "Day 1: 舊城區的浪漫與夜景", en: "Day 1: Romance of Old Town" },
                 stops: [
-                    { time: "14:00", title: {zh: "瓦茨拉夫廣場", en: "Wenceslas Square"}, desc: {zh: "布拉格的商業心臟，融合歷史建築與現代活力。", en: "Bustling city hub, blend of history and modern vibes."}, type: "sight", query: "Wenceslas Square Prague" },
-                    { time: "15:00", title: {zh: "火藥塔 & 市民會館", en: "Powder Tower"}, desc: {zh: "哥德式城門地標，欣賞新藝術風格的精緻細節。", en: "Gothic gate landmark, admire Art Nouveau details."}, type: "sight", query: "Powder Tower Prague" },
-                    { time: "16:00", title: {zh: "舊城廣場 & 煙囪捲", en: "Old Town Square"}, desc: {zh: "必看整點天文鐘。推薦試試路邊攤的肉桂煙囪捲。", en: "Watch the Clock. Try the local cinnamon Trdelník."}, type: "sight", query: "Old Town Square Prague" },
-                    { time: "18:00", title: {zh: "查理大橋 (日落)", en: "Charles Bridge (Sunset)"}, desc: {zh: "30尊聖徒雕像間漫步，日落時分的河景最迷人。", en: "Walk among 30 statues, best river views at sunset."}, type: "sight", query: "Charles Bridge Prague" },
-                    { time: "19:30", title: {zh: "晚餐: Maitrea", en: "Dinner: Maitrea"}, desc: {zh: "禪意風素食。推薦：老布拉格傳統素食拼盤。", en: "Zen style. Rec: Old Prague Traditional Vegan Plate."}, type: "food", query: "Maitrea restaurace Prague" }
+                    { time: "14:00", title: {zh: "瓦茨拉夫廣場", en: "Wenceslas Square"}, desc: {zh: "布拉格的商業心臟，融合歷史建築與現代活力。", en: "Bustling city hub, history meets modern vibes."}, type: "sight", query: "Wenceslas Square Prague", img: "https://images.unsplash.com/photo-1592960761633-8557b63f533a?w=160&h=160&fit=crop" },
+                    { time: "15:00", title: {zh: "火藥塔 & 市民會館", en: "Powder Tower"}, desc: {zh: "哥德式城門地標，欣賞新藝術風格的精緻細節。", en: "Gothic gate landmark, admire Art Nouveau details."}, type: "sight", query: "Powder Tower Prague", img: "https://images.unsplash.com/photo-1541849546-216549ae216d?w=160&h=160&fit=crop" },
+                    { time: "16:00", title: {zh: "舊城廣場 & 煙囪捲", en: "Old Town Square"}, desc: {zh: "必看整點天文鐘。推薦試試路邊攤的肉桂煙囪捲。", en: "Watch the Clock. Try the local cinnamon Trdelník."}, type: "sight", query: "Old Town Square Prague", img: "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=160&h=160&fit=crop" },
+                    { time: "18:00", title: {zh: "查理大橋 (日落)", en: "Charles Bridge (Sunset)"}, desc: {zh: "30尊聖徒雕像間漫步，日落時分的河景最迷人。", en: "Walk among 30 statues, best river views at sunset."}, type: "sight", query: "Charles Bridge Prague", img: "https://images.unsplash.com/photo-1559523118-2b842915822e?w=160&h=160&fit=crop" },
+                    { time: "19:30", title: {zh: "晚餐: Maitrea", en: "Dinner: Maitrea"}, desc: {zh: "禪意風素食。推薦：老布拉格傳統素食拼盤。", en: "Zen style. Rec: Old Prague Traditional Vegan Plate."}, type: "food", query: "Maitrea restaurace Prague", img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=160&h=160&fit=crop" }
                 ]
             },
             2: {
                 title: { zh: "Day 2: 城堡區與文青牆", en: "Day 2: Castle & Lennon Wall" },
                 stops: [
-                    { time: "10:00", title: {zh: "佩特任山纜車", en: "Petřín Funicular"}, desc: {zh: "搭乘復古纜車上山，俯瞰布拉格紅屋頂全景。", en: "Ride funicular up the hill for panoramic roof views."}, type: "transport", query: "Petrin Funicular Prague" },
-                    { time: "12:30", title: {zh: "午餐: Vegan's Prague", en: "Lunch: Vegan's Prague"}, desc: {zh: "城堡下絕美景觀。推薦：甜菜根素食漢堡。", en: "Castle view. Rec: Beetroot Burger & Zucchini Lasagna."}, type: "food", query: "Vegan's Prague" },
-                    { time: "14:00", title: {zh: "布拉格城堡", en: "Prague Castle"}, desc: {zh: "世界最大古堡群，必訪莊嚴的聖維特大教堂。", en: "Largest castle complex, visit St. Vitus Cathedral."}, type: "sight", query: "Prague Castle" },
-                    { time: "16:00", title: {zh: "小城區漫步", en: "Lesser Town Stroll"}, desc: {zh: "沿涅魯達街下坡，探索巴洛克式巷弄小店。", en: "Walk down Nerudova St., explore Baroque alleys."}, type: "transport", query: "Malá Strana Prague" },
-                    { time: "17:30", title: {zh: "列儂牆", en: "Lennon Wall"}, desc: {zh: "象徵愛與和平的彩色塗鴉牆，文青必拍。", en: "Colorful graffiti wall symbolizing love and peace."}, type: "sight", query: "Lennon Wall Prague" },
-                    { time: "19:00", title: {zh: "晚餐: Lehká Hlava", en: "Dinner: Lehká Hlava"}, desc: {zh: "夢幻星空房。推薦：墨西哥黑豆飯與玉米片。", en: "Starry ceiling. Rec: Mexican Bowl with Nachos."}, type: "food", query: "Lehká Hlava Prague" }
+                    { time: "10:00", title: {zh: "佩特任山纜車", en: "Petřín Funicular"}, desc: {zh: "搭乘復古纜車上山，俯瞰布拉格紅屋頂全景。", en: "Ride funicular up the hill for panoramic roof views."}, type: "transport", query: "Petrin Funicular Prague", img: "https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?w=160&h=160&fit=crop" },
+                    { time: "12:30", title: {zh: "午餐: Vegan's Prague", en: "Lunch: Vegan's Prague"}, desc: {zh: "城堡下絕美景觀。推薦：甜菜根素食漢堡。", en: "Castle view. Rec: Beetroot Burger."}, type: "food", query: "Vegan's Prague", img: "https://images.unsplash.com/photo-1520201163981-8cc95007dd2a?w=160&h=160&fit=crop" },
+                    { time: "14:00", title: {zh: "布拉格城堡", en: "Prague Castle"}, desc: {zh: "世界最大古堡群，必訪莊嚴的聖維特大教堂。", en: "Largest castle complex, visit St. Vitus Cathedral."}, type: "sight", query: "Prague Castle", img: "https://images.unsplash.com/photo-1549528623-64491972f071?w=160&h=160&fit=crop" },
+                    { time: "16:00", title: {zh: "小城區漫步", en: "Lesser Town Stroll"}, desc: {zh: "沿涅魯達街下坡，探索巴洛克式巷弄小店。", en: "Walk down Nerudova St., explore Baroque alleys."}, type: "transport", query: "Malá Strana Prague", img: "https://images.unsplash.com/photo-1542385151-546473663674?w=160&h=160&fit=crop" },
+                    { time: "17:30", title: {zh: "列儂牆", en: "Lennon Wall"}, desc: {zh: "象徵愛與和平的彩色塗鴉牆，文青必拍。", en: "Colorful graffiti wall symbolizing love and peace."}, type: "sight", query: "Lennon Wall Prague", img: "https://images.unsplash.com/photo-1563292787-8f5b4d732c53?w=160&h=160&fit=crop" },
+                    { time: "19:00", title: {zh: "晚餐: Lehká Hlava", en: "Dinner: Lehká Hlava"}, desc: {zh: "夢幻星空房。推薦：墨西哥黑豆飯與玉米片。", en: "Starry ceiling. Rec: Mexican Bowl with Nachos."}, type: "food", query: "Lehká Hlava Prague", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=160&h=160&fit=crop" }
                 ]
             },
             3: {
                 title: { zh: "Day 3: 伏爾塔瓦河與現代藝術", en: "Day 3: Vltava River & Art" },
                 stops: [
-                    { time: "10:30", title: {zh: "跳舞的房子", en: "Dancing House"}, desc: {zh: "前衛解構主義建築，由Gehry設計的扭曲之美。", en: "Deconstructivist icon designed by Frank Gehry."}, type: "sight", query: "Dancing House Prague" },
-                    { time: "13:00", title: {zh: "午餐: 河岸市集", en: "Lunch: River Market"}, desc: {zh: "週六農夫市集。推薦：烤起司三明治與新鮮莓果。", en: "Farmers market. Rec: Grilled Cheese & fresh berries."}, type: "food", query: "Naplavka Farmers Market" },
-                    { time: "14:30", title: {zh: "租借腳踏船", en: "Pedal Boat Rental"}, desc: {zh: "踩著天鵝船到河中央，用不同視角看查理大橋。", en: "Rent a swan boat to view the bridge from the water."}, type: "activity", query: "Slovansky Island Boat Rental" },
-                    { time: "16:30", title: {zh: "Na Příkopě 購物街", en: "Na Příkopě Shopping"}, desc: {zh: "布拉格的香榭大道，購買保養品與水晶紀念品。", en: "Prague's main boulevard for shopping and souvenirs."}, type: "activity", query: "Na Prikope Prague" },
-                    { time: "19:00", title: {zh: "晚餐: Etnosvět", en: "Dinner: Etnosvět"}, desc: {zh: "獲獎無數的國際素食。推薦：純素韃靼牛排。", en: "Award-winning. Rec: Vegan Tartare & Risotto."}, type: "food", query: "Etnosvet Prague" },
-                    { time: "21:00", title: {zh: "酒吧: Hemingway", en: "Bar: Hemingway"}, desc: {zh: "頂級調酒體驗，亦提供多款精緻無酒精特調。", en: "Top-tier cocktails, also offers great Mocktails."}, type: "activity", query: "Hemingway Bar Prague" }
+                    { time: "10:30", title: {zh: "跳舞的房子", en: "Dancing House"}, desc: {zh: "前衛解構主義建築，由Gehry設計的扭曲之美。", en: "Deconstructivist icon designed by Frank Gehry."}, type: "sight", query: "Dancing House Prague", img: "https://images.unsplash.com/photo-1457816049753-15793081b7d5?w=160&h=160&fit=crop" },
+                    { time: "13:00", title: {zh: "午餐: 河岸市集", en: "Lunch: River Market"}, desc: {zh: "週六農夫市集。推薦：烤起司三明治與新鮮莓果。", en: "Farmers market. Rec: Grilled Cheese & fresh berries."}, type: "food", query: "Naplavka Farmers Market", img: "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=160&h=160&fit=crop" },
+                    { time: "14:30", title: {zh: "租借腳踏船", en: "Pedal Boat Rental"}, desc: {zh: "踩著天鵝船到河中央，用不同視角看查理大橋。", en: "Rent a swan boat to view the bridge from the water."}, type: "activity", query: "Slovansky Island Boat Rental", img: "https://images.unsplash.com/photo-1621257916849-c09a8eb76e5d?w=160&h=160&fit=crop" },
+                    { time: "16:30", title: {zh: "Na Příkopě 購物街", en: "Na Příkopě Shopping"}, desc: {zh: "布拉格的香榭大道，購買保養品與水晶紀念品。", en: "Prague's main boulevard for shopping and souvenirs."}, type: "activity", query: "Na Prikope Prague", img: "https://images.unsplash.com/photo-1481438549483-387c513304be?w=160&h=160&fit=crop" },
+                    { time: "19:00", title: {zh: "晚餐: Etnosvět", en: "Dinner: Etnosvět"}, desc: {zh: "獲獎無數的國際素食。推薦：純素韃靼牛排。", en: "Award-winning. Rec: Vegan Tartare & Risotto."}, type: "food", query: "Etnosvet Prague", img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=160&h=160&fit=crop" },
+                    { time: "21:00", title: {zh: "酒吧: Hemingway", en: "Bar: Hemingway"}, desc: {zh: "頂級調酒體驗，亦提供多款精緻無酒精特調。", en: "Top-tier cocktails, also offers great Mocktails."}, type: "activity", query: "Hemingway Bar Prague", img: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=160&h=160&fit=crop" }
                 ]
             },
             4: {
                 title: { zh: "Day 4: 早午餐與告別", en: "Day 4: Brunch & Farewell" },
                 stops: [
-                    { time: "10:00", title: {zh: "早午餐: Café Savoy", en: "Brunch: Café Savoy"}, desc: {zh: "新文藝復興風格。推薦：法式吐司與熱巧克力。", en: "Neo-Renaissance style. Rec: French Toast & Cocoa."}, type: "food", query: "Cafe Savoy Prague" },
-                    { time: "11:30", title: {zh: "哈維爾市集", en: "Havel's Market"}, desc: {zh: "百年露天市集，購買在地蜂蜜、水果與木偶。", en: "Historic open-air market for honey, fruit & puppets."}, type: "sight", query: "Havelske trziste Prague" },
-                    { time: "13:00", title: {zh: "前往機場", en: "To Airport"}, desc: {zh: "建議預留3小時辦理退稅。搭乘 Bolt 最方便。", en: "Allow 3 hrs for tax refund. Take Bolt for comfort."}, type: "transport", query: "Vaclav Havel Airport Prague" }
+                    { time: "10:00", title: {zh: "早午餐: Café Savoy", en: "Brunch: Café Savoy"}, desc: {zh: "新文藝復興風格。推薦：法式吐司與熱巧克力。", en: "Neo-Renaissance style. Rec: French Toast & Cocoa."}, type: "food", query: "Cafe Savoy Prague", img: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=160&h=160&fit=crop" },
+                    { time: "11:30", title: {zh: "哈維爾市集", en: "Havel's Market"}, desc: {zh: "百年露天市集，購買在地蜂蜜、水果與木偶。", en: "Historic open-air market for honey, fruit & puppets."}, type: "sight", query: "Havelske trziste Prague", img: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=160&h=160&fit=crop" },
+                    { time: "13:00", title: {zh: "前往機場", en: "To Airport"}, desc: {zh: "建議預留3小時辦理退稅。搭乘 Bolt 最方便。", en: "Allow 3 hrs for tax refund. Take Bolt for comfort."}, type: "transport", query: "Vaclav Havel Airport Prague", img: "https://images.unsplash.com/photo-1436491865332-7a615109cc05?w=160&h=160&fit=crop" }
                 ]
             }
         };
 
+        // --- 輔助功能：預載圖片 ---
+        function preloadImages(day) {
+            const stops = itineraryData[day].stops;
+            stops.forEach(stop => {
+                if (stop.img && !imageCache[stop.img]) {
+                    const img = new Image();
+                    img.src = stop.img;
+                    img.onload = () => {
+                        // 圖片載入完成後重繪 (如果還在同一天)
+                        if (currentDay === day) drawItinerary(day);
+                    };
+                    imageCache[stop.img] = img;
+                }
+            });
+        }
+
         function toggleLanguage() {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             updateStaticText();
-            loadDay(currentDay);
+            drawItinerary(currentDay);
         }
 
         function updateStaticText() {
             const t = uiText[currentLang];
             document.getElementById('main-title').innerText = t.mainTitle;
             document.getElementById('sub-title').innerText = t.subTitle;
-            document.getElementById('btn1').innerText = t.dayNames[0].split(':')[0]; // Just Day X
+            document.getElementById('btn1').innerText = t.dayNames[0].split(':')[0];
             
-            // Update Legend
             document.getElementById('leg-sight').innerHTML = `<span class="dot" style="background:#d35400"></span> ${t.legend[0]}`;
             document.getElementById('leg-food').innerHTML = `<span class="dot" style="background:#27ae60"></span> ${t.legend[1]}`;
             document.getElementById('leg-transport').innerHTML = `<span class="dot" style="background:#3498db"></span> ${t.legend[2]}`;
         }
 
+        // --- 核心：文字換行計算 ---
+        function wrapText(context, text, x, y, maxWidth, lineHeight, simulate = false) {
+            const words = text.split(''); // 中文逐字切分
+            let line = '';
+            let lineCount = 0;
+            let currentY = y;
+
+            // 英文單詞合併邏輯簡單處理 (優化：如果遇到空格則當作單詞)
+            // 這裡為了中英文混排簡單，採用逐字檢查 + 寬度判斷
+            // 若需更嚴謹英文換行可改用 space split
+            
+            for (let n = 0; n < words.length; n++) {
+                // 簡單判斷：如果是英文單詞，嘗試整詞合併 (簡易版)
+                let testLine = line + words[n];
+                let metrics = context.measureText(testLine);
+                let testWidth = metrics.width;
+                
+                if (testWidth > maxWidth && n > 0) {
+                    if (!simulate) context.fillText(line, x, currentY);
+                    line = words[n];
+                    currentY += lineHeight;
+                    lineCount++;
+                } else {
+                    line = testLine;
+                }
+            }
+            if (!simulate) context.fillText(line, x, currentY);
+            lineCount++;
+            return { lineCount, height: lineCount * lineHeight };
+        }
+
         function drawItinerary(day) {
-            // 清空畫布 與 點擊區域
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hitRegions = [];
+            // 1. 取得容器寬度，設定 Canvas 尺寸
+            const width = container.clientWidth;
+            // 避免寬度 0 的錯誤
+            if (width === 0) return; 
+
+            // 設定響應式參數
+            const isMobile = width < 500;
+            const timelineX = isMobile ? 30 : 50; // 時間軸線 X 座標
+            const contentStartX = isMobile ? 60 : 100; // 內容起始 X 座標
+            const cardPadding = 15;
+            const imgSize = isMobile ? 60 : 80;
+            const cardMinHeight = imgSize + 30; // 確保高度至少包住圖片
             
             const data = itineraryData[day];
             const stops = data.stops;
+
+            // 2. 預計算高度 (因為 Canvas 高度改變會清空內容，必須先算)
+            ctx.font = '14px -apple-system, BlinkMacSystemFont, Arial'; // 設定字體以測量
+            let totalHeight = 80; // 標題區高度
+            const cardGap = 20;
+            const cardWidth = width - contentStartX - 20; // 20px 右邊距
             
-            // 繪製背景裝飾
+            // 儲存每個卡片的高度以便繪製
+            const stopHeights = stops.map(stop => {
+                // 計算文字所需高度
+                // 標題高度 + 間距 + 描述高度 + 按鈕高度
+                const titleH = 24; 
+                const btnH = 40; 
+                // 描述文字寬度：扣除圖片寬度 (如果有的話)
+                const textWidth = cardWidth - (cardPadding * 3) - imgSize;
+                const descMetrics = wrapText(ctx, stop.desc[currentLang], 0, 0, textWidth, 18, true);
+                
+                let h = cardPadding + titleH + 5 + descMetrics.height + 10 + btnH + cardPadding;
+                return Math.max(h, cardMinHeight); // 確保不小於圖片高度
+            });
+
+            const contentHeight = stopHeights.reduce((a, b) => a + b + cardGap, 0);
+            canvas.width = width;
+            canvas.height = totalHeight + contentHeight + 50; // 加上底部緩衝
+
+            // 3. 開始繪製
+            hitRegions = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 背景條紋裝飾
             ctx.strokeStyle = '#f8f8f8';
             ctx.lineWidth = 1;
-            for(let i=0; i<canvas.width; i+=20) {
+            for(let i=0; i<canvas.width; i+=30) {
                 ctx.beginPath();
                 ctx.moveTo(i, 0);
                 ctx.lineTo(i, canvas.height);
                 ctx.stroke();
             }
 
-            // 繪製標題
+            // 標題
             ctx.fillStyle = '#2c3e50';
-            ctx.font = 'bold 22px Helvetica';
+            ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, Arial';
             ctx.textAlign = 'left';
-            ctx.fillText(data.title[currentLang], 30, 40);
-            
-            // 繪製路線 (連接線)
+            ctx.fillText(data.title[currentLang], 20, 45);
+
+            // 繪製時間軸線
             ctx.beginPath();
-            ctx.moveTo(100, 80);
-            ctx.lineTo(100, 80 + (stops.length - 1) * 110);
+            ctx.moveTo(timelineX, 80);
+            ctx.lineTo(timelineX, canvas.height - 40);
             ctx.strokeStyle = '#bdc3c7';
             ctx.lineWidth = 4;
-            ctx.setLineDash([10, 5]); // 虛線效果
+            ctx.setLineDash([10, 5]);
             ctx.stroke();
-            ctx.setLineDash([]); // 重置為實線
+            ctx.setLineDash([]);
 
-            // 循環繪製每個點
+            let currentY = 80;
+
             stops.forEach((stop, index) => {
-                const y = 80 + index * 110;
-                const x = 100;
-
-                // 1. 繪製節點圓圈
-                ctx.beginPath();
-                ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                const h = stopHeights[index];
+                const cardX = contentStartX;
+                const cardY = currentY;
+                const cardW = cardWidth;
                 
-                // 根據類型決定顏色
+                // --- 繪製時間軸節點 ---
+                const nodeY = cardY + 25; // 節點約在卡片上方
+                ctx.beginPath();
+                ctx.arc(timelineX, nodeY, 12, 0, 2 * Math.PI);
+                
+                // 顏色邏輯
                 let color = '#d35400'; // Sight
-                if (stop.type === 'food') color = '#27ae60'; // Food
-                if (stop.type === 'transport' || stop.type === 'activity') color = '#3498db'; // Transport
+                if (stop.type === 'food') color = '#27ae60';
+                if (stop.type === 'transport' || stop.type === 'activity') color = '#3498db';
                 
                 ctx.fillStyle = color;
                 ctx.fill();
@@ -283,124 +380,167 @@
                 ctx.lineWidth = 3;
                 ctx.stroke();
 
-                // 2. 繪製時間 (左側)
+                // 繪製時間 (手機版放節點上方，桌面版放節點旁邊?) 
+                // 為了簡化 RWD，統一放在節點旁邊，但調整對齊
                 ctx.fillStyle = '#7f8c8d';
-                ctx.font = 'bold 16px Arial';
-                ctx.textAlign = 'right';
-                ctx.fillText(stop.time, x - 30, y + 5);
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                // 在圓圈內畫 Icon 或是時間? 
+                // 這裡改為：時間寫在卡片左上角或節點旁邊
+                // 為了手機閱讀，將時間畫在節點上方
+                ctx.fillStyle = '#666';
+                ctx.font = 'bold 13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(stop.time, timelineX, nodeY - 18);
 
-                // 3. 繪製內容卡片 (右側)
-                const cardX = x + 35;
-                const cardY = y - 40;
-                const cardW = 440;
-                const cardH = 80;
-
-                // 卡片陰影
-                ctx.shadowColor = 'rgba(0,0,0,0.1)';
-                ctx.shadowBlur = 10;
-                ctx.shadowOffsetX = 2;
-                ctx.shadowOffsetY = 2;
-
-                // 卡片背景
+                // --- 繪製卡片本體 ---
+                // 陰影
+                ctx.shadowColor = 'rgba(0,0,0,0.08)';
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetY = 4;
+                
                 ctx.fillStyle = 'white';
-                ctx.fillRect(cardX, cardY, cardW, cardH);
+                // 圓角矩形
+                roundRect(ctx, cardX, cardY, cardW, h, 12);
+                ctx.fill();
                 
-                // 左側色彩條
+                // 左側色條
                 ctx.fillStyle = color;
-                ctx.fillRect(cardX, cardY, 5, cardH);
+                ctx.beginPath();
+                ctx.roundRect(cardX, cardY, 6, h, [12, 0, 0, 12]);
+                ctx.fill();
 
-                ctx.shadowColor = 'transparent'; // Reset shadow
+                ctx.shadowColor = 'transparent'; // 重置陰影
 
-                // 4. 文字內容
-                ctx.textAlign = 'left';
-                
+                // --- 卡片內容 ---
+                const textStartX = cardX + 15 + 6;
+                const textWidth = cardW - (cardPadding * 3) - imgSize;
+
                 // 標題
                 ctx.fillStyle = '#2c3e50';
-                ctx.font = 'bold 18px Arial';
-                ctx.fillText(stop.title[currentLang], cardX + 20, cardY + 25);
-                
-                // 描述 (調整字體大小以容納較長的描述)
-                ctx.fillStyle = '#7f8c8d';
-                ctx.font = '12px Arial'; // 微調字體大小 13px -> 12px
-                // 為了防止文字過長重疊按鈕，簡單截斷或依靠這行足夠寬
-                // 440 width - 140 buttons - 20 padding = ~280px available
-                ctx.fillText(stop.desc[currentLang], cardX + 20, cardY + 50);
+                ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(stop.title[currentLang], textStartX, cardY + 30);
 
-                // 5. 繪製互動按鈕 (Canvas內繪製按鈕)
-                const btnW = 60;
-                const btnH = 24;
-                const btnY = cardY + 45;
+                // 描述 (自動換行)
+                ctx.fillStyle = '#7f8c8d';
+                ctx.font = '14px -apple-system, BlinkMacSystemFont, Arial';
+                wrapText(ctx, stop.desc[currentLang], textStartX, cardY + 55, textWidth, 20);
+
+                // --- 繪製圖片 ---
+                if (stop.img && imageCache[stop.img]) {
+                    const img = imageCache[stop.img];
+                    const imgX = cardX + cardW - imgSize - 15;
+                    const imgY = cardY + 15;
+                    
+                    ctx.save();
+                    // 繪製圓角圖片路徑
+                    roundRect(ctx, imgX, imgY, imgSize, imgSize, 8);
+                    ctx.clip();
+                    try {
+                        ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
+                    } catch(e) { /* ignore load error */ }
+                    ctx.restore();
+                } else {
+                    // Placeholder box if image not loaded
+                    const imgX = cardX + cardW - imgSize - 15;
+                    const imgY = cardY + 15;
+                    ctx.fillStyle = '#eee';
+                    roundRect(ctx, imgX, imgY, imgSize, imgSize, 8);
+                    ctx.fill();
+                    ctx.fillStyle = '#ccc';
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('📷', imgX + imgSize/2, imgY + imgSize/2 + 7);
+                }
+
+                // --- 按鈕區域 ---
+                const btnY = cardY + h - 35; // 靠底部
+                const btnH = 28;
+                const btnW = 70;
                 
-                // 按鈕 1: 地圖 (Map)
-                const btnMapX = cardX + cardW - 140;
-                drawButton(ctx, btnMapX, btnY, btnW, btnH, uiText[currentLang].btnMap, '#ecf0f1', '#2c3e50');
-                
-                // 註冊點擊區域
+                // 地圖按鈕
+                const btnMapX = textStartX;
+                drawButton(ctx, btnMapX, btnY, btnW, btnH, uiText[currentLang].btnMap, '#f0f2f5', '#2c3e50');
                 hitRegions.push({
                     x: btnMapX, y: btnY, w: btnW, h: btnH,
                     type: 'link',
                     url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.query)}`
                 });
 
-                // 按鈕 2: 路線 (Route)
-                const btnRouteX = cardX + cardW - 70;
+                // 路線按鈕
+                const btnRouteX = btnMapX + btnW + 10;
                 drawButton(ctx, btnRouteX, btnY, btnW, btnH, uiText[currentLang].btnRoute, '#3498db', 'white');
-
-                // 註冊點擊區域
                 hitRegions.push({
                     x: btnRouteX, y: btnY, w: btnW, h: btnH,
                     type: 'link',
                     url: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stop.query)}`
                 });
-                
-                // 圖示 (簡單 Emoji)
-                let icon = '📸';
-                if (stop.type === 'food') icon = '🥗';
-                if (stop.type === 'transport') icon = '🚃';
-                if (stop.type === 'activity') icon = '🚲';
-                
-                ctx.font = '20px Arial';
-                ctx.fillStyle = '#333';
-                ctx.fillText(icon, cardX + cardW - 40, cardY + 25);
+
+                // 更新 Y 座標給下一個卡片
+                currentY += h + cardGap;
             });
         }
 
-        // 輔助函數：在Canvas上畫按鈕
+        // 輔助：圓角矩形路徑
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(x, y, w, h, r);
+            } else {
+                // Fallback for older browsers
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+            }
+            ctx.closePath();
+        }
+
         function drawButton(ctx, x, y, w, h, text, bgColor, textColor) {
             ctx.fillStyle = bgColor;
-            // 圓角矩形簡單模擬
-            ctx.fillRect(x, y, w, h);
+            roundRect(ctx, x, y, w, h, 14); // Pill shape
+            ctx.fill();
             
             ctx.fillStyle = textColor;
-            ctx.font = 'bold 12px Arial';
+            ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(text, x + w/2, y + h/2 + 4);
+            ctx.fillText(text, x + w/2, y + h/2 + 5);
         }
 
         function loadDay(day) {
             currentDay = day;
             
-            // 更新按鈕樣式
+            // 更新 UI 按鈕狀態
             for(let i=1; i<=4; i++) {
-                document.getElementById('btn'+i).classList.remove('active');
+                const btn = document.getElementById('btn'+i);
+                if(i === day) btn.classList.add('active');
+                else btn.classList.remove('active');
             }
-            document.getElementById('btn'+day).classList.add('active');
 
-            // 執行動畫繪製
+            // 預載圖片並繪製
+            preloadImages(day);
             drawItinerary(day);
         }
 
-        // 監聽 Canvas 點擊事件
+        // 事件監聽
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            // 處理 canvas 可能被 CSS 縮放的情況 (雖然這裡我們設為 1:1)
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
 
-            // 檢查是否點擊到任何按鈕區域
             hitRegions.forEach(region => {
                 if (mouseX >= region.x && mouseX <= region.x + region.w &&
                     mouseY >= region.y && mouseY <= region.y + region.h) {
-                    
                     if (region.type === 'link') {
                         window.open(region.url, '_blank');
                     }
@@ -408,11 +548,12 @@
             });
         });
 
-        // 監聽滑鼠移動，改變游標樣式
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
 
             let isHovering = false;
             hitRegions.forEach(region => {
@@ -421,8 +562,17 @@
                     isHovering = true;
                 }
             });
-
             canvas.style.cursor = isHovering ? 'pointer' : 'default';
+        });
+
+        // RWD 核心：監聽視窗大小改變
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            // Debounce 避免頻繁重繪
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                drawItinerary(currentDay);
+            }, 100);
         });
 
         // 初始加載
