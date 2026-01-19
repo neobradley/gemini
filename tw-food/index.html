@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣三天兩夜美食之旅 | Taiwan 3-Day Foodie Tour</title>
+    <style>
+        :root {
+            --primary: #e74c3c; /* Tasty Red */
+            --secondary: #f39c12; /* Snack Orange */
+            --bg: #fdfbf7;
+            --text: #2c3e50;
+        }
+        body {
+            font-family: "Helvetica Neue", Arial, "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 20px;
+        }
+        h1 { margin: 0; color: var(--primary); }
+        .subtitle { color: #7f8c8d; font-size: 0.9em; }
+        
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .tab-btn {
+            background: white;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 20px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .tab-btn.active, .tab-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Content Sections */
+        .itinerary-content {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s;
+        }
+        .itinerary-content.active {
+            display: block;
+        }
+
+        /* Cards */
+        .day-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            border-left: 5px solid var(--secondary);
+        }
+        .day-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .meal-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+        }
+        .meal-item:last-child { border-bottom: none; }
+        
+        .food-name { font-weight: bold; font-size: 1.1em; }
+        .food-desc { color: #555; font-size: 0.95em; margin: 5px 0; }
+        .en-text { color: #7f8c8d; font-size: 0.85em; font-style: italic; display: block; margin-top: 2px; }
+
+        /* Map Button */
+        .map-btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        .map-btn:hover { background-color: #2980b9; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>台灣三天兩夜美食之旅</h1>
+        <div class="subtitle">Taiwan 3-Day Foodie Tour: A Bilingual Guide</div>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="openCity('tainan')">台南 (Tainan)</button>
+        <button class="tab-btn" onclick="openCity('taipei')">台北 (Taipei)</button>
+    </div>
+
+    <div id="tainan" class="itinerary-content active">
+        <div class="day-card">
+            <div class="day-title">Day 1: 國華街與牛肉湯 <span style="font-size:0.8em">Street Food & Beef Soup</span></div>
+            
+            <div class="meal-item">
+                <div class="food-name">早餐：富盛號碗粿 / 阿松割包</div>
+                <span class="en-text">Breakfast: Fu Sheng Hao Rice Cake / Ah Song Steamed Bun</span>
+                <div class="food-desc">黑黑的醬汁配上Q彈碗粿，是台南人的共同回憶。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=富盛號碗粿+台南" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+
+            <div class="meal-item">
+                <div class="food-name">午餐：阿裕牛肉湯 (或六千/文章)</div>
+                <span class="en-text">Lunch: A-Yu Beef Soup (or Liuqian/Wenzhang)</span>
+                <div class="food-desc">現宰溫體牛淋上滾燙高湯，鮮嫩無比。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=阿裕牛肉湯" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+
+            <div class="meal-item">
+                <div class="food-name">晚餐：阿江鱔魚意麵</div>
+                <span class="en-text">Dinner: A-Jiang Eel Noodles</span>
+                <div class="food-desc">大火快炒的鑊氣與酸甜醬汁，口感爽脆。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=阿江鱔魚意麵" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+        </div>
+
+        <div class="day-card">
+            <div class="day-title">Day 2: 安平海味與夜市 <span style="font-size:0.8em">Anping District & Night Market</span></div>
+            
+            <div class="meal-item">
+                <div class="food-name">午餐：周氏蝦捲 / 陳家蚵捲</div>
+                <span class="en-text">Lunch: Chou's Shrimp Rolls / Chen's Oyster Rolls</span>
+                <div class="food-desc">位於安平老街，外皮酥脆，內餡鮮美。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=周氏蝦捲+台南" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+
+            <div class="meal-item">
+                <div class="food-name">晚餐：花園夜市 / 大東夜市</div>
+                <span class="en-text">Dinner: Garden Night Market / Dadong Night Market</span>
+                <div class="food-desc">台南最大型的流動夜市，必吃滷味與地瓜球。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=花園夜市" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+        </div>
+
+        <div class="day-card">
+            <div class="day-title">Day 3: 老宅咖啡與伴手禮 <span style="font-size:0.8em">Old House Cafe & Souvenirs</span></div>
+             <div class="meal-item">
+                <div class="food-name">伴手禮：連得堂煎餅</div>
+                <span class="en-text">Souvenir: Lien De Tang Crackers</span>
+                <div class="food-desc">百年古法手工製作，每人限購兩包。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=連得堂煎餅" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="taipei" class="itinerary-content">
+        <div class="day-card">
+            <div class="day-title">Day 1: 老台北與夜市 <span style="font-size:0.8em">Old Taipei & Night Market</span></div>
+            
+            <div class="meal-item">
+                <div class="food-name">午餐：大稻埕 賣麵炎仔</div>
+                <span class="en-text">Lunch: Mai Mian Yan Zai (Dadaocheng)</span>
+                <div class="food-desc">必比登推薦，古早味切仔麵與紅燒肉。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=賣麵炎仔" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+
+            <div class="meal-item">
+                <div class="food-name">晚餐：寧夏夜市 (劉芋仔/圓環邊蚵仔煎)</div>
+                <span class="en-text">Dinner: Ningxia Night Market</span>
+                <div class="food-desc">台北美食密度最高的夜市，米其林推薦集中地。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=寧夏夜市" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+        </div>
+
+        <div class="day-card">
+            <div class="day-title">Day 2: 經典與摩登 <span style="font-size:0.8em">Classics & Modern City</span></div>
+            
+            <div class="meal-item">
+                <div class="food-name">早餐：阜杭豆漿</div>
+                <span class="en-text">Breakfast: Fuhang Soy Milk</span>
+                <div class="food-desc">米其林推薦厚燒餅，需排隊。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=阜杭豆漿" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+
+            <div class="meal-item">
+                <div class="food-name">午餐：永康牛肉麵 + 芒果冰</div>
+                <span class="en-text">Lunch: Yongkang Beef Noodle + Mango Shaved Ice</span>
+                <div class="food-desc">濃郁紅燒湯頭，餐後必配思慕昔芒果冰。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=永康牛肉麵" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+            
+             <div class="meal-item">
+                <div class="food-name">晚餐：鼎泰豐 (信義店/新生店)</div>
+                <span class="en-text">Dinner: Din Tai Fung</span>
+                <div class="food-desc">世界聞名的小籠包，台灣總店品質最穩。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=鼎泰豐+信義" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+        </div>
+
+        <div class="day-card">
+            <div class="day-title">Day 3: 魯肉飯傳奇 <span style="font-size:0.8em">Braised Pork Rice Legend</span></div>
+            <div class="meal-item">
+                <div class="food-name">午餐：金峰魯肉飯</div>
+                <span class="en-text">Lunch: Jin Feng Braised Pork Rice</span>
+                <div class="food-desc">肥瘦適中，搭配鼎邊銼與熱湯。</div>
+                <a href="https://www.google.com/maps/search/?api=1&query=金峰魯肉飯" target="_blank" class="map-btn">📍 Google Maps</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function openCity(cityName) {
+        var i;
+        var x = document.getElementsByClassName("itinerary-content");
+        var tabs = document.getElementsByClassName("tab-btn");
+        
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+            x[i].classList.remove("active");
+        }
+        for (i = 0; i < tabs.length; i++) {
+            tabs[i].classList.remove("active");
+        }
+        
+        document.getElementById(cityName).style.display = "block";
+        document.getElementById(cityName).classList.add("active");
+        
+        // Update active button visual
+        if(cityName === 'tainan') {
+            tabs[0].classList.add("active");
+        } else {
+            tabs[1].classList.add("active");
+        }
+    }
+</script>
+
+</body>
+</html>
