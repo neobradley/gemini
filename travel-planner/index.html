@@ -3,24 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemini 客製化旅遊行程系統</title>
-  <!-- 引入 Tailwind CSS -->
+  <title>Gemini 實境旅遊規劃系統</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 引入 Lucide Icons -->
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Leaflet.js (真實地圖套件, 免費免Key) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- html2pdf.js (真實 PDF 匯出套件) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
-    /* 自訂動畫與樣式補充 */
     .fade-in { animation: fadeIn 0.3s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .map-bg {
-      background-image: radial-gradient(#d4d4d8 1.5px, transparent 1.5px);
-      background-size: 32px 32px;
-      transition: transform 0.7s ease-in-out;
-      transform-origin: center;
-    }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    /* Leaflet 自訂 Marker 樣式 */
+    .custom-map-marker { background: transparent; border: none; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
@@ -30,11 +34,21 @@
     <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
       <div class="bg-slate-900 p-8 text-white text-center relative overflow-hidden">
         <i data-lucide="sparkles" class="w-12 h-12 mx-auto mb-4 text-blue-400 relative z-10 animate-pulse"></i>
-        <h1 class="text-3xl font-bold mb-2 relative z-10">Gemini 智能旅程規劃</h1>
-        <p class="text-slate-300 relative z-10 text-sm">純 HTML 原生版：高穩定搜尋、微調與匯出</p>
+        <h1 class="text-3xl font-bold mb-2 relative z-10">Gemini 實境旅程規劃</h1>
+        <p class="text-slate-300 relative z-10 text-sm">真實地圖渲染 x 真實 PDF 匯出</p>
       </div>
       
       <form id="main-form" class="p-6 sm:p-8 space-y-8" onsubmit="handleGenerate(event)">
+        
+        <!-- API Key 設定區塊 (解決查詢失敗) -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+          <label class="block text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+            <i data-lucide="key" class="w-4 h-4"></i> 請輸入您的 Gemini API Key
+          </label>
+          <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full px-4 py-2.5 rounded-lg border-2 border-blue-200 focus:border-blue-600 outline-none text-sm font-mono" required />
+          <p class="text-xs text-blue-600 mt-2">※ 金鑰僅儲存於您的瀏覽器本地端 (localStorage)，絕不外流。</p>
+        </div>
+
         <!-- 基礎資訊 -->
         <div class="space-y-4">
           <div class="relative">
@@ -72,20 +86,20 @@
           </div>
         </div>
 
-        <!-- 興趣與飲食 (動態生成) -->
+        <!-- 興趣與飲食 -->
         <div class="space-y-3 pt-4 border-t border-slate-100">
-          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">特別興趣 (BDD 情境)</h3>
+          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">特別興趣 (BDD 黃金時刻驗證)</h3>
           <div id="interests-container" class="flex flex-wrap gap-2"></div>
         </div>
         <div class="space-y-3 pt-4 border-t border-slate-100">
-          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">飲食限制 (BDD 情境)</h3>
+          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">飲食限制 (BDD 團體素食驗證)</h3>
           <div id="dietary-container" class="flex flex-wrap gap-2"></div>
         </div>
 
         <!-- 鎖定行程 -->
         <div class="space-y-3 pt-4 border-t border-slate-100">
           <div class="flex justify-between items-center">
-            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="anchor" class="w-4 h-4 text-amber-500"></i> 強制鎖定行程</h3>
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i data-lucide="anchor" class="w-4 h-4 text-amber-500"></i> 強制鎖定行程 (BDD 錨點驗證)</h3>
             <button type="button" onclick="addFixedEvent()" class="text-sm text-blue-600 font-bold flex items-center gap-1 hover:text-blue-800">
               <i data-lucide="plus" class="w-4 h-4"></i> 加入事件
             </button>
@@ -108,7 +122,7 @@
     </div>
     <h2 id="loading-title" class="text-2xl font-bold mb-4 animate-pulse">正在為您搜尋真實推薦...</h2>
     <div class="space-y-2 text-slate-400 text-sm text-center max-w-md">
-      <p id="loading-text1">正在透過 Google Search 擷取真實景點...</p>
+      <p id="loading-text1">正在透過 Google Search 擷取真實景點與座標...</p>
       <p id="loading-text2">正在組裝高可用性的 JSON 結構...</p>
       <div id="loading-error-box" class="bg-slate-800 p-4 rounded-xl border border-slate-700 hidden mt-4">
         <p id="loading-error-msg" class="text-rose-400 font-bold mb-2"></p>
@@ -119,62 +133,54 @@
 
   <!-- 視圖 3: 儀表板 -->
   <div id="view-dashboard" class="min-h-screen flex flex-col hidden relative overflow-hidden">
-    <!-- 頂部導覽 -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap gap-4 items-center justify-between z-20">
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap gap-4 items-center justify-between z-20 shadow-sm">
       <div>
         <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
           <i data-lucide="map-pin" class="w-6 h-6 text-blue-600"></i> <span id="dash-dest"></span>
         </h1>
-        <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 mt-1 font-medium" id="dash-tags">
-          <!-- Tags 插入處 -->
-        </div>
+        <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 mt-1 font-medium" id="dash-tags"></div>
       </div>
       <div class="flex gap-2">
         <button onclick="switchView('form')" class="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">重新規劃</button>
         <button onclick="toggleEditing()" id="btn-edit" class="px-4 py-2 text-sm font-bold rounded-lg transition-colors flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200">
           <i data-lucide="edit" class="w-4 h-4"></i> <span>微調行程</span>
         </button>
-        <button onclick="handleExport()" class="px-4 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-2 shadow-md">
-          <i data-lucide="download" class="w-4 h-4"></i> 匯出
+        <button onclick="handleExportPDF()" class="px-4 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-2 shadow-md">
+          <i data-lucide="download" class="w-4 h-4"></i> 匯出 PDF
         </button>
       </div>
     </header>
 
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-      <!-- 時間軸 -->
+      <!-- 時間軸 (為 PDF 匯出加上 ID) -->
       <div class="w-full md:w-[45%] lg:w-2/5 h-[50vh] md:h-full overflow-y-auto bg-white border-r border-slate-200 p-6 scroll-smooth z-10 custom-scrollbar shadow-lg">
-        <div id="timeline-container" class="space-y-8 pb-20"></div>
-      </div>
-      <!-- 地圖 -->
-      <div class="w-full md:w-[55%] lg:w-3/5 h-[50vh] md:h-full bg-[#f1f0ea] relative overflow-hidden flex-1">
-        <div id="map-container" class="absolute inset-0 map-bg">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 w-full h-full pointer-events-none opacity-40 stroke-blue-500" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-             <polyline id="map-polyline" points=""></polyline>
-          </svg>
-          <div id="map-markers"></div>
+        <div id="pdf-content">
+          <div id="timeline-container" class="space-y-8 pb-20"></div>
         </div>
+      </div>
+      <!-- 真實地圖容器 -->
+      <div class="w-full md:w-[55%] lg:w-3/5 h-[50vh] md:h-full relative overflow-hidden flex-1 z-0">
+        <div id="real-map" class="absolute inset-0 w-full h-full z-0"></div>
         <div id="edit-badge" class="absolute top-6 left-1/2 transform -translate-x-1/2 bg-amber-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-bounce items-center gap-2 z-40 hidden flex">
           <i data-lucide="edit" class="w-4 h-4"></i> 編輯模式開啟中
         </div>
       </div>
     </main>
     
-    <!-- 匯出 Modal -->
+    <!-- 匯出進度 Modal -->
     <div id="export-modal" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
       <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center fade-in">
         <div class="relative w-16 h-16 mx-auto mb-6"><i data-lucide="loader-2" class="w-16 h-16 text-slate-800 animate-spin"></i></div>
-        <h3 class="text-xl font-bold text-slate-900 mb-2">正在產生旅遊手冊...</h3>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">正在產生真實 PDF...</h3>
+        <p class="text-slate-500 text-sm mb-6">這可能需要幾秒鐘的時間</p>
         <div class="space-y-3 mt-6 text-left" id="export-steps"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // --- API & 基礎設定 ---
-    const apiKey = ""; 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    // --- 基礎設定與常數 ---
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
     const iconMap = { sightseeing: 'camera', shopping: 'shopping-bag', dining: 'utensils', nature: 'compass', cafe: 'coffee', culture: 'ticket', accommodation: 'home', event: 'anchor', default: 'map-pin' };
     const tipStyleMap = { 
       info: { icon: 'info', color: 'text-blue-700 bg-blue-50 border-blue-200' }, 
@@ -187,14 +193,15 @@
     const dietaryOptions = ['素食/蔬食', '純素食', '不吃牛', '清真認證'];
     const interestOptions = [{id: 'photography', label: '📸 攝影/取景'}, {id: 'culture', label: '🏛️ 深度人文'}, {id: 'shopping', label: '🛍️ 盡情購物'}, {id: 'relax', label: '💆 悠閒放鬆'}];
     
-    const swapFallbackPool = [
-      { name: "在地秘境咖啡廳", type: "cafe", duration: "1.5小時", rating: "4.5", desc: "深受當地人喜愛的隱藏版咖啡廳，享受寧靜午後。", tips: [{text: "推薦手沖咖啡", category: "success"}] },
-      { name: "特色文化展覽館", type: "culture", duration: "2小時", rating: "4.6", desc: "深入了解在地歷史與文化發展的絕佳去處。", tips: [{text: "需購票入場", category: "ticket"}] },
-      { name: "熱門拍照打卡點", type: "sightseeing", duration: "1小時", rating: "4.7", desc: "社群上最火紅的必訪地標，視野極佳。", tips: [{text: "人潮較多請注意隨身物品", category: "warning"}] },
-      { name: "在地人氣小吃", type: "dining", duration: "1小時", rating: "4.4", desc: "隱藏在巷弄中的平價美食，體驗最真實的當地風味。", tips: [{text: "僅收現金", category: "warning"}] }
-    ];
+    // Fallback 地點預設備用經緯度 (以碧瑤/馬尼拉附近為例)
+    const fallbackBaseLat = 16.4023;
+    const fallbackBaseLng = 120.5960;
 
-    // --- 全域狀態管理 ---
+    let leafletMap = null;
+    let polylineLayer = null;
+    let markerLayers = [];
+
+    // --- 全域狀態 ---
     let state = {
       formData: {
         destination: '', days: 3, partySize: '2', accommodationStatus: 'unknown',
@@ -205,8 +212,12 @@
       isEditing: false
     };
 
-    // --- 初始化與事件綁定 ---
+    // --- 初始化 ---
     document.addEventListener('DOMContentLoaded', () => {
+      // 讀取本地儲存的 API Key
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (savedKey) document.getElementById('input-api-key').value = savedKey;
+
       renderToggles();
       renderAccFields();
       renderFixedEvents();
@@ -218,7 +229,12 @@
       document.getElementById('view-loading').classList.add('hidden');
       document.getElementById('view-dashboard').classList.add('hidden');
       document.getElementById(`view-${viewName}`).classList.remove('hidden');
-      if(viewName === 'form') { window.scrollTo(0,0); }
+      
+      if(viewName === 'form') window.scrollTo(0,0);
+      if(viewName === 'dashboard') {
+        // 等待 DOM 渲染後初始化地圖
+        setTimeout(() => initRealMap(), 100);
+      }
     }
 
     // --- 表單邏輯 ---
@@ -227,108 +243,70 @@
       const container = document.getElementById('acc-container');
       status === 'known' ? container.classList.remove('hidden') : container.classList.add('hidden');
     }
-
-    function addAccField() {
-      state.formData.accommodations.push('');
-      renderAccFields();
-    }
-
-    function removeAccField(idx) {
-      state.formData.accommodations.splice(idx, 1);
-      if (state.formData.accommodations.length === 0) state.formData.accommodations.push('');
-      renderAccFields();
-    }
-
+    function addAccField() { state.formData.accommodations.push(''); renderAccFields(); }
+    function removeAccField(idx) { state.formData.accommodations.splice(idx, 1); if (!state.formData.accommodations.length) state.formData.accommodations.push(''); renderAccFields(); }
     function handleAccInput(idx, val) { state.formData.accommodations[idx] = val; }
-
     function renderAccFields() {
-      const html = state.formData.accommodations.map((acc, idx) => `
+      document.getElementById('acc-list').innerHTML = state.formData.accommodations.map((acc, idx) => `
         <div class="flex gap-2">
           <input type="text" value="${acc}" onchange="handleAccInput(${idx}, this.value)" placeholder="飯店名稱或地址 ${idx + 1}" class="w-full px-4 py-2.5 rounded-lg border-2 border-slate-200 focus:border-blue-500 text-sm font-medium" />
           ${state.formData.accommodations.length > 1 ? `<button type="button" onclick="removeAccField(${idx})" class="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>` : ''}
         </div>
       `).join('');
-      document.getElementById('acc-list').innerHTML = html;
       lucide.createIcons();
     }
 
     function toggleArrayItem(field, val) {
       const idx = state.formData[field].indexOf(val);
-      if (idx > -1) state.formData[field].splice(idx, 1);
-      else state.formData[field].push(val);
+      if (idx > -1) state.formData[field].splice(idx, 1); else state.formData[field].push(val);
       renderToggles();
     }
-
     function renderToggles() {
-      const intsHtml = interestOptions.map(opt => {
-        const isActive = state.formData.interests.includes(opt.id);
-        const classes = isActive ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300';
-        return `<button type="button" onclick="toggleArrayItem('interests', '${opt.id}')" class="px-4 py-2 rounded-lg text-sm transition-all border-2 font-medium ${classes}">${opt.label}</button>`;
-      }).join('');
-      document.getElementById('interests-container').innerHTML = intsHtml;
-
-      const dietHtml = dietaryOptions.map(opt => {
-        const isActive = state.formData.dietary.includes(opt);
-        const classes = isActive ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300';
-        return `<button type="button" onclick="toggleArrayItem('dietary', '${opt}')" class="px-4 py-2 rounded-lg text-sm transition-all border-2 font-medium ${classes}">${opt}</button>`;
-      }).join('');
-      document.getElementById('dietary-container').innerHTML = dietHtml;
+      document.getElementById('interests-container').innerHTML = interestOptions.map(opt => `<button type="button" onclick="toggleArrayItem('interests', '${opt.id}')" class="px-4 py-2 rounded-lg text-sm transition-all border-2 font-medium ${state.formData.interests.includes(opt.id) ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}">${opt.label}</button>`).join('');
+      document.getElementById('dietary-container').innerHTML = dietaryOptions.map(opt => `<button type="button" onclick="toggleArrayItem('dietary', '${opt}')" class="px-4 py-2 rounded-lg text-sm transition-all border-2 font-medium ${state.formData.dietary.includes(opt) ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}">${opt}</button>`).join('');
     }
 
-    function getSafeDays() {
-      const d = parseInt(document.getElementById('input-days').value);
-      return (d > 0 && d <= 14) ? d : 3;
-    }
-
-    function addFixedEvent() {
-      state.formData.fixedEvents.push({ day: 1, time: '12:00', name: '' });
-      renderFixedEvents();
-    }
-
+    function getSafeDays() { const d = parseInt(document.getElementById('input-days').value); return (d > 0 && d <= 14) ? d : 3; }
+    function addFixedEvent() { state.formData.fixedEvents.push({ day: 1, time: '12:00', name: '' }); renderFixedEvents(); }
     function updateFixedEvent(idx, field, val) { state.formData.fixedEvents[idx][field] = val; }
     function removeFixedEvent(idx) { state.formData.fixedEvents.splice(idx, 1); renderFixedEvents(); }
-
     function renderFixedEvents() {
       const days = getSafeDays();
       const optionsHtml = Array.from({length: days}, (_, i) => i + 1).map(d => `<option value="${d}">第 ${d} 天</option>`).join('');
-      
-      const html = state.formData.fixedEvents.map((evt, idx) => `
+      document.getElementById('fixed-events-list').innerHTML = state.formData.fixedEvents.map((evt, idx) => `
         <div class="flex gap-2 items-center bg-amber-50 p-3 rounded-xl border border-amber-200 flex-wrap">
-          <select onchange="updateFixedEvent(${idx}, 'day', this.value)" class="w-24 px-2 py-2 rounded-lg border border-slate-200 text-sm font-medium">
-            ${optionsHtml.replace(`value="${evt.day}"`, `value="${evt.day}" selected`)}
-          </select>
+          <select onchange="updateFixedEvent(${idx}, 'day', this.value)" class="w-24 px-2 py-2 rounded-lg border border-slate-200 text-sm font-medium">${optionsHtml.replace(`value="${evt.day}"`, `value="${evt.day}" selected`)}</select>
           <input type="time" value="${evt.time}" onchange="updateFixedEvent(${idx}, 'time', this.value)" class="w-28 px-2 py-2 rounded-lg border border-slate-200 text-sm font-medium" />
           <input type="text" value="${evt.name}" onchange="updateFixedEvent(${idx}, 'name', this.value)" placeholder="事件名稱" class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium min-w-[120px]" />
           <button type="button" onclick="removeFixedEvent(${idx})" class="text-slate-400 hover:text-rose-600 transition-colors p-2"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
       `).join('');
-      document.getElementById('fixed-events-list').innerHTML = html;
       lucide.createIcons();
     }
 
-    // --- AI 與 Fallback 邏輯 ---
+    // --- AI 與 Fallback ---
     async function handleGenerate(e) {
       e.preventDefault();
-      
-      // 收集最新的 Form Data
+      const apiKeyInput = document.getElementById('input-api-key').value.trim();
+      if (!apiKeyInput) return alert('請輸入您的 Gemini API Key 以啟用真實搜尋');
+      localStorage.setItem('gemini_api_key', apiKeyInput); // 儲存金鑰
+
       state.formData.destination = document.getElementById('input-destination').value;
       state.formData.days = document.getElementById('input-days').value;
       state.formData.partySize = document.getElementById('input-partySize').value;
-      
-      if (!state.formData.destination) return alert('請輸入目的地');
       
       showLoading();
       window.scrollTo(0, 0);
       
       try {
-        const rawTrip = await callGeminiAPI(state.formData);
+        const rawTrip = await callGeminiAPI(state.formData, apiKeyInput);
         finishGenerate(formatTripData(rawTrip));
       } catch (error) {
         showLoadingError(error.message);
         setTimeout(() => {
           const mockTrip = formatTripData(generateFallback(state.formData));
           finishGenerate(mockTrip);
-        }, 2500);
+        }, 3000);
       }
     }
 
@@ -343,7 +321,6 @@
       document.getElementById('loading-text2').style.display = 'block';
       lucide.createIcons();
     }
-
     function showLoadingError(msg) {
       document.getElementById('loading-icon').setAttribute('data-lucide', 'alert-circle');
       document.getElementById('loading-icon').classList.replace('text-blue-300', 'text-rose-500');
@@ -355,30 +332,29 @@
       document.getElementById('loading-error-msg').innerText = msg;
       lucide.createIcons();
     }
-
     function finishGenerate(tripData) {
       state.currentTrip = tripData;
       state.isEditing = false;
-      if (tripData.schedule[0]?.activities[0]) {
-        state.selectedActivityId = tripData.schedule[0].activities[0].instanceId;
-      }
+      if (tripData.schedule[0]?.activities[0]) state.selectedActivityId = tripData.schedule[0].activities[0].instanceId;
       renderDashboard();
       switchView('dashboard');
     }
 
-    async function callGeminiAPI(data) {
+    async function callGeminiAPI(data, key) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
       const fixedDesc = data.fixedEvents.length > 0 ? data.fixedEvents.map(e => `第${e.day}天${e.time}有不可變動行程：「${e.name}」`).join('；') : '無';
       const promptText = `
         你是一位極度專業的旅遊規劃師。請使用 Google Search 搜尋真實資料，為「${data.destination}」規劃 ${data.days} 天行程。以繁體中文 (zh-TW) 回覆。
-        約束條件：人數：${data.partySize}。飲食限制：${data.dietary.length ? data.dietary.join('、') : '無'}。興趣偏好：${data.interests.length ? data.interests.join('、') : '一般'}。絕對錨點：${fixedDesc}。住宿：${data.accommodationStatus === 'known' ? data.accommodations.filter(a=>a).join('、') : '請推薦'}。
+        約束條件：人數：${data.partySize}。飲食：${data.dietary.length ? data.dietary.join('、') : '無'}。興趣：${data.interests.length ? data.interests.join('、') : '一般'}。絕對錨點：${fixedDesc}。
+        重點：請務必在 lat 與 lng 欄位給予該景點真實的 GPS 經緯度座標 (浮點數)，以便在地圖上渲染。
         強制輸出 JSON：
-        {"schedule":[{"day":1,"date":"Day 1","activities":[{"name":"真實地點名稱","type":"sightseeing, shopping, dining, nature, cafe, culture, accommodation, event 之一","time":"HH:MM","duration":"停留時間","rating":"評分字串","desc":"介紹","x":20到80整數,"y":20到80整數,"tips":[{"text":"注意事項","category":"info, warning, ticket, success 之一"}]}]}]}
+        {"schedule":[{"day":1,"date":"Day 1","activities":[{"name":"真實地點名稱","type":"sightseeing, shopping, dining, nature, cafe, culture, accommodation, event 之一","time":"HH:MM","duration":"停留時間","rating":"評分","desc":"介紹","lat":真實緯度浮點數,"lng":真實經度浮點數,"tips":[{"text":"注意事項","category":"info, warning, ticket, success 之一"}]}]}]}
       `;
       const payload = { contents: [{ parts: [{ text: promptText }] }], tools: [{ google_search: {} }], generationConfig: { responseMimeType: "application/json", temperature: 0.1 } };
       let lastErr;
       for (let i = 0; i < 3; i++) {
         try {
-          const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
           const json = await res.json();
           if (!res.ok) throw new Error(json.error?.message || "HTTP Error");
           let text = json.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -388,22 +364,28 @@
           const parsed = JSON.parse(text);
           if (!parsed.schedule) throw new Error("無 schedule 陣列");
           return { id: `trip-${Date.now()}`, destination: data.destination, schedule: parsed.schedule, isMock: false };
-        } catch(e) { lastErr = e; if (i === 2) break; await delay(1000 * (i + 1)); }
+        } catch(e) { lastErr = e; if (i === 2) break; await delay(1500 * (i + 1)); }
       }
       throw lastErr;
     }
 
     function generateFallback(data) {
       const sch = [];
-      const days = (parseInt(data.days) > 0 && parseInt(data.days) <= 14) ? parseInt(data.days) : 3;
+      const days = getSafeDays();
       for (let i = 1; i <= days; i++) {
         const acts = [];
-        if (data.accommodationStatus === 'known' && data.accommodations[0]) acts.push({ name: `出發: ${data.accommodations[0]}`, type: 'accommodation', time: '09:00', duration: '--', rating: '-', desc: '從住宿點展開美好一天。', x: 50, y: 50, tips: [] });
         const isPhoto = data.interests.includes('photography');
-        acts.push({ name: isPhoto ? '晨間舊城區光影漫步' : '市區地標導覽', type: 'sightseeing', time: isPhoto ? '07:30' : '10:30', duration: '2.5小時', rating: '4.8', desc: '探索當地風景。', x: 30, y: 40, tips: isPhoto ? [{text: '黃金時刻適合取景', category: 'info'}] : [] });
-        acts.push({ name: '人氣特色餐館', type: 'dining', time: '13:00', duration: '1.5小時', rating: '4.6', desc: '品嚐最地道的當地美味。', x: 60, y: 30, tips: [] });
-        acts.push({ name: isPhoto ? '日落觀景台' : '當代藝術博物館', type: isPhoto ? 'nature' : 'culture', time: isPhoto ? '16:30' : '15:00', duration: '2小時', rating: '4.7', desc: '午後體驗。', x: 75, y: 60, tips: [] });
-        if (data.accommodationStatus === 'known' && data.accommodations[0]) acts.push({ name: `返回: ${data.accommodations[0]}`, type: 'accommodation', time: '19:30', duration: '--', rating: '-', desc: '結束充實的一天。', x: 50, y: 50, tips: [] });
+        
+        // 假資料也配上接近碧瑤的座標，加上亂數偏移
+        const genLat = () => fallbackBaseLat + (Math.random() - 0.5) * 0.05;
+        const genLng = () => fallbackBaseLng + (Math.random() - 0.5) * 0.05;
+
+        if (data.accommodationStatus === 'known' && data.accommodations[0]) acts.push({ name: `出發: ${data.accommodations[0]}`, type: 'accommodation', time: '09:00', duration: '--', rating: '-', desc: '住宿點出發。', lat: genLat(), lng: genLng(), tips: [] });
+        acts.push({ name: isPhoto ? '晨間絕美觀景台' : '市區文化廣場', type: 'sightseeing', time: isPhoto ? '07:30' : '10:30', duration: '2.5小時', rating: '4.8', desc: '絕佳體驗', lat: genLat(), lng: genLng(), tips: isPhoto ? [{text: '黃金時刻', category: 'info'}] : [] });
+        acts.push({ name: '人氣在地餐館', type: 'dining', time: '13:00', duration: '1.5小時', rating: '4.6', desc: '地道美味', lat: genLat(), lng: genLng(), tips: [] });
+        acts.push({ name: '午後藝術特區', type: 'culture', time: isPhoto ? '16:30' : '15:00', duration: '2小時', rating: '4.7', desc: '豐富文化。', lat: genLat(), lng: genLng(), tips: [] });
+        if (data.accommodationStatus === 'known' && data.accommodations[0]) acts.push({ name: `返回: ${data.accommodations[0]}`, type: 'accommodation', time: '19:30', duration: '--', rating: '-', desc: '結束一天。', lat: genLat(), lng: genLng(), tips: [] });
+        
         acts.sort((a,b) => a.time.localeCompare(b.time));
         sch.push({ day: i, date: `Day ${i}`, activities: acts });
       }
@@ -419,15 +401,78 @@
             ...act,
             instanceId: act.id || `act-${Math.random().toString(36).substr(2, 9)}`,
             icon: iconMap[act.type] || iconMap.default,
-            x: typeof act.x === 'number' ? act.x : Math.floor(Math.random()*60)+20,
-            y: typeof act.y === 'number' ? act.y : Math.floor(Math.random()*60)+20,
+            // 確保有經緯度，否則賦予預設
+            lat: typeof act.lat === 'number' ? act.lat : fallbackBaseLat + (Math.random()-0.5)*0.05,
+            lng: typeof act.lng === 'number' ? act.lng : fallbackBaseLng + (Math.random()-0.5)*0.05,
             mappedTips: (act.tips || []).map(t => ({ text: t.text, ...(tipStyleMap[t.category] || tipStyleMap.default) }))
           }))
         }))
       };
     }
 
-    // --- Dashboard 渲染與互動 ---
+    // --- 真實地圖 (Leaflet) 邏輯 ---
+    function initRealMap() {
+      if (leafletMap) leafletMap.remove(); // 清除舊地圖
+      
+      leafletMap = L.map('real-map').setView([fallbackBaseLat, fallbackBaseLng], 13);
+      
+      // 使用開源 OpenStreetMap 圖資
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(leafletMap);
+
+      updateMapMarkers();
+    }
+
+    function updateMapMarkers() {
+      if (!leafletMap || !state.currentTrip) return;
+
+      // 清除舊圖層
+      if (polylineLayer) leafletMap.removeLayer(polylineLayer);
+      markerLayers.forEach(m => leafletMap.removeLayer(m));
+      markerLayers = [];
+
+      let latlngs = [];
+      
+      state.currentTrip.schedule.forEach(day => {
+        day.activities.forEach(act => {
+          if (act.lat && act.lng) {
+            latlngs.push([act.lat, act.lng]);
+            const isSel = state.selectedActivityId === act.instanceId;
+            const isAcc = act.type === 'accommodation';
+            const isEvent = act.type === 'event';
+            
+            // 自訂 HTML Marker 結合 Tailwind 與 Lucide
+            const markerHtml = `
+              <div class="relative group flex flex-col items-center focus:outline-none" style="margin-top: -24px; margin-left: -16px;">
+                <div class="whitespace-nowrap px-3 py-1.5 rounded-lg shadow-lg text-xs font-bold mb-2 transition-all border ${isSel ? 'bg-blue-600 border-blue-600 text-white opacity-100 translate-y-0 scale-110' : 'bg-white border-slate-200 text-slate-700 opacity-0 group-hover:opacity-100 translate-y-2'}">
+                  ${act.name}
+                </div>
+                <div class="p-2.5 rounded-full shadow-md border-4 transition-all duration-300 ${isSel ? 'bg-blue-600 border-white text-white scale-125 shadow-xl' : isAcc ? 'bg-slate-300 border-white text-white' : isEvent ? 'bg-amber-500 border-white text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}">
+                  <i data-lucide="${act.icon}" class="w-4 h-4"></i>
+                </div>
+              </div>
+            `;
+            
+            const customIcon = L.divIcon({ className: 'custom-map-marker', html: markerHtml, iconSize: [32, 48] });
+            const marker = L.marker([act.lat, act.lng], { icon: customIcon }).addTo(leafletMap);
+            
+            marker.on('click', () => selectActivity(act.instanceId));
+            markerLayers.push(marker);
+          }
+        });
+      });
+
+      // 繪製路徑
+      if (latlngs.length > 0) {
+        polylineLayer = L.polyline(latlngs, { color: '#3b82f6', weight: 4, opacity: 0.6, dashArray: '8, 8' }).addTo(leafletMap);
+        leafletMap.fitBounds(polylineLayer.getBounds(), { padding: [50, 50] }); // 自動縮放包含所有點
+      }
+      
+      lucide.createIcons();
+    }
+
+    // --- Dashboard 互動 ---
     function toggleEditing() {
       state.isEditing = !state.isEditing;
       const btn = document.getElementById('btn-edit');
@@ -447,8 +492,14 @@
 
     function selectActivity(id) {
       state.selectedActivityId = id;
-      updateMapTransform();
-      renderDashboard(); // Re-render for highlighted state
+      renderDashboard();
+      
+      // 地圖平滑飛越 (FlyTo)
+      let selAct = null;
+      state.currentTrip.schedule.forEach(d => d.activities.forEach(a => { if(a.instanceId === id) selAct = a; }));
+      if (selAct && leafletMap) {
+        leafletMap.flyTo([selAct.lat, selAct.lng], 15, { duration: 1.5 });
+      }
     }
 
     function deleteActivity(dayIdx, actIdx) {
@@ -457,33 +508,20 @@
     }
 
     function swapActivity(dayIdx, actIdx) {
+      const oldAct = state.currentTrip.schedule[dayIdx].activities[actIdx];
+      // 產生附近隨機座標
+      const newLat = oldAct.lat + (Math.random()-0.5)*0.02;
+      const newLng = oldAct.lng + (Math.random()-0.5)*0.02;
+      
       const randomFb = swapFallbackPool[Math.floor(Math.random() * swapFallbackPool.length)];
-      const oldAct = state.currentTrip.schedule[dayIdx].activities[actIndex];
       const newAct = {
-        ...randomFb,
-        instanceId: `swap-${Date.now()}`,
-        time: oldAct.time,
-        x: Math.floor(Math.random() * 60) + 20, y: Math.floor(Math.random() * 60) + 20,
-        icon: iconMap[randomFb.type] || iconMap.default,
+        ...randomFb, instanceId: `swap-${Date.now()}`, time: oldAct.time,
+        lat: newLat, lng: newLng, icon: iconMap[randomFb.type] || iconMap.default,
         mappedTips: randomFb.tips.map(t => ({ text: t.text, ...(tipStyleMap[t.category] || tipStyleMap.default) }))
       };
-      state.currentTrip.schedule[dayIdx].activities[actIndex] = newAct;
-      state.selectedActivityId = newAct.instanceId;
-      updateMapTransform();
-      renderDashboard();
-    }
-
-    function updateMapTransform() {
-      let selAct = null;
-      state.currentTrip.schedule.forEach(d => d.activities.forEach(a => {
-        if(a.instanceId === state.selectedActivityId) selAct = a;
-      }));
-      const mapContainer = document.getElementById('map-container');
-      if (selAct && typeof selAct.x === 'number') {
-        mapContainer.style.transform = `translate(${50 - selAct.x}%, ${50 - selAct.y}%) scale(1.6)`;
-      } else {
-        mapContainer.style.transform = `translate(0%, 0%) scale(1)`;
-      }
+      
+      state.currentTrip.schedule[dayIdx].activities[actIdx] = newAct;
+      selectActivity(newAct.instanceId);
     }
 
     function renderDashboard() {
@@ -493,10 +531,10 @@
       document.getElementById('dash-dest').innerText = trip.destination;
       let tagsHtml = `<span>${state.formData.days || trip.days} 天</span>•`;
       if (trip.isMock) tagsHtml += `<span class="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 rounded-md"><i data-lucide="alert-circle" class="w-3 h-3"></i> 備用測試資料</span>`;
-      else tagsHtml += `<span class="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 rounded-md"><i data-lucide="sparkles" class="w-3 h-3"></i> AI 真實搜尋</span>`;
+      else tagsHtml += `<span class="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 rounded-md"><i data-lucide="sparkles" class="w-3 h-3"></i> 真實資料</span>`;
       document.getElementById('dash-tags').innerHTML = tagsHtml;
 
-      // Render Timeline
+      // 渲染 Timeline
       let timeHtml = '';
       trip.schedule.forEach((dayData, dIdx) => {
         timeHtml += `<div class="relative"><h3 class="text-lg font-black text-slate-900 mb-4 sticky top-0 bg-white/95 backdrop-blur-sm py-3 z-10 border-b-2 border-slate-100"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${dayData.date}</span></h3><div class="space-y-4 pl-3 border-l-2 border-slate-100 ml-3">`;
@@ -542,38 +580,12 @@
       });
       document.getElementById('timeline-container').innerHTML = timeHtml;
 
-      // Render Map
-      let polylinePts = [];
-      let markersHtml = '';
-      trip.schedule.forEach(day => day.activities.forEach(act => {
-        if(typeof act.x === 'number' && typeof act.y === 'number') {
-          polylinePts.push(`${act.x},${act.y}`);
-          const isSel = state.selectedActivityId === act.instanceId;
-          const isAcc = act.type === 'accommodation';
-          const isEvent = act.type === 'event';
-          
-          markersHtml += `
-            <div class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ${isSel?'z-30':'z-10'}" style="left:${act.x}%; top:${act.y}%;">
-              <button onclick="selectActivity('${act.instanceId}')" class="relative group flex flex-col items-center focus:outline-none">
-                <div class="whitespace-nowrap px-3 py-1.5 rounded-lg shadow-lg text-xs font-bold mb-2 transition-all border ${isSel ? 'bg-blue-600 border-blue-600 text-white opacity-100 translate-y-0 scale-110' : 'bg-white border-slate-200 text-slate-700 opacity-0 group-hover:opacity-100 translate-y-2 pointer-events-none'}">
-                  ${act.name}
-                </div>
-                <div class="p-2.5 rounded-full shadow-md border-4 transition-all duration-300 ${isSel ? 'bg-blue-600 border-white text-white scale-125 shadow-xl' : isAcc ? 'bg-slate-300 border-white text-white' : isEvent ? 'bg-amber-500 border-white text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}">
-                  <i data-lucide="${act.icon}" class="w-5 h-5"></i>
-                </div>
-              </button>
-            </div>`;
-        }
-      }));
-      document.getElementById('map-polyline').setAttribute('points', polylinePts.join(' '));
-      document.getElementById('map-markers').innerHTML = markersHtml;
-
-      updateMapTransform();
-      lucide.createIcons();
+      // 更新地圖標記
+      updateMapMarkers();
     }
 
-    // --- 匯出模擬 ---
-    async function handleExport() {
+    // --- 真實 PDF 匯出邏輯 (整合 html2pdf.js) ---
+    async function handleExportPDF() {
       const modal = document.getElementById('export-modal');
       const stepsDiv = document.getElementById('export-steps');
       modal.classList.remove('hidden');
@@ -581,29 +593,49 @@
       const updateStep = (step) => {
         stepsDiv.innerHTML = `
           <div class="flex items-center gap-3 text-sm font-medium ${step >= 0 ? 'text-slate-800' : 'text-slate-400'}">
-            ${step > 0 ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>' : '<div class="w-5 h-5 border-2 border-slate-300 rounded-full"></div>'} 彙整行程資料
+            ${step > 0 ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>' : '<div class="w-5 h-5 border-2 border-slate-300 rounded-full"></div>'} 擷取行程時間軸佈局
           </div>
           <div class="flex items-center gap-3 text-sm font-medium ${step >= 1 ? 'text-slate-800' : 'text-slate-400'}">
-            ${step > 1 ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>' : '<div class="w-5 h-5 border-2 border-slate-300 rounded-full"></div>'} 渲染動態地圖
+            ${step > 1 ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>' : '<div class="w-5 h-5 border-2 border-slate-300 rounded-full"></div>'} 轉換為高畫質圖片
           </div>
           <div class="flex items-center gap-3 text-sm font-medium ${step >= 2 ? 'text-slate-800' : 'text-slate-400'}">
-            ${step > 2 ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>' : '<div class="w-5 h-5 border-2 border-slate-300 rounded-full"></div>'} 打包 PDF
+            ${step > 2 ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>' : '<div class="w-5 h-5 border-2 border-slate-300 rounded-full"></div>'} 封裝並下載 PDF
           </div>
         `;
         lucide.createIcons();
       };
 
       updateStep(0);
-      await delay(800);
+      await delay(500);
+      
+      // 設定 PDF 選項
+      const element = document.getElementById('pdf-content');
+      const destName = state.currentTrip.destination.replace(/\s+/g, '');
+      const opt = {
+        margin:       10,
+        filename:     `${destName}_專屬行程表.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
       updateStep(1);
-      await delay(1000);
-      updateStep(2);
-      await delay(1000);
-      modal.classList.add('hidden');
-      alert(`✅ 模擬匯出成功！\n已將行程匯出為 PDF 檔案。`);
+      
+      // 執行轉換 (利用 html2pdf.js)
+      try {
+        await html2pdf().set(opt).from(element).save();
+        updateStep(2);
+        await delay(800);
+      } catch (err) {
+        console.error("PDF 匯出失敗", err);
+        alert("PDF 匯出過程中發生錯誤。");
+      } finally {
+        modal.classList.add('hidden');
+      }
     }
 
   </script>
 </body>
 </html>
+
 
