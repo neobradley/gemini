@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCMC 4D3N Itinerary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Add Leaflet Map CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: #f8fafc; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Hide scrollbar for horizontal tabs */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased pb-20">
+
+    <header class="bg-teal-700 text-white shadow-lg relative">
+        <div class="max-w-3xl mx-auto px-4 py-6">
+            <button id="lang-toggle" onclick="toggleLanguage()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold py-1.5 px-3 rounded-full transition-colors backdrop-blur-sm flex items-center">
+                <i class="fa-solid fa-language mr-1.5"></i> <span id="lang-text">中文</span>
+            </button>
+            <h1 id="header-title" class="text-2xl font-bold mb-2 pr-20"><i class="fa-solid fa-plane-departure mr-2"></i>HCMC 4D3N</h1>
+            <p id="header-subtitle" class="text-sm opacity-90">Romantic & High CP Trip (3 Couples)</p>
+            <p id="header-meta" class="text-xs opacity-80 mt-2 bg-black/10 inline-block px-2 py-1 rounded-md"><i class="fa-solid fa-bed mr-1"></i>Dist. 3 | Cebu Pacific Red-eye</p>
+        </div>
+    </header>
+
+    <div class="bg-white shadow-sm sticky top-0 z-20 border-b border-gray-200">
+        <nav class="max-w-3xl mx-auto flex overflow-x-auto no-scrollbar" id="tabs-container">
+            <!-- Tabs will be injected via JS -->
+        </nav>
+    </div>
+
+    <main class="max-w-3xl mx-auto p-4 mt-2">
+        <div id="content-container" class="fade-in">
+            <!-- Content will be injected via JS -->
+        </div>
+
+        <!-- Add Map Container -->
+        <div id="map-wrapper" class="hidden mt-8 mb-4 fade-in">
+            <h3 class="font-bold text-lg text-slate-800 mb-3 flex items-center" id="map-title">
+                <i class="fa-solid fa-map-location-dot text-teal-600 mr-2"></i> <span id="map-title-text">Daily Route Map</span>
+            </h3>
+            <div id="itinerary-map" class="w-full h-64 md:h-80 rounded-xl shadow-md border border-slate-200 relative" style="z-index: 10;"></div>
+        </div>
+    </main>
+
+    <script>
+        let currentLang = 'en';
+        let currentTab = 'day1';
+        let map = null;
+        let routeLayer = null;
+
+        const i18n = {
+            en: {
+                header: {
+                    title: "HCMC 4D3N",
+                    subtitle: "Romantic & High CP Trip (3 Couples / Veg Options)",
+                    meta: "Stay: Dist. 3 | Cebu Pacific Red-eye",
+                    langToggle: "切換中文"
+                },
+                labels: {
+                    transit: "Transit",
+                    budget: "Budget",
+                    photo: "Photo",
+                    dishes: "Top 3"
+                },
+                tabs: {
+                    day1: "Day 1",
+                    day2: "Day 2",
+                    day3: "Day 3",
+                    day4: "Day 4",
+                    tips: "Tips"
+                },
+                mapTitle: "Daily Route Map",
+                content: {
+                    day1: [
+                        { time: "10:00", title: "Phở Hòa Pasteur", link: "https://www.google.com/maps/search/?api=1&query=Pho+Hoa+Pasteur+Ho+Chi+Minh", coords: [10.7915, 106.6896], desc: "Start with traditional Vietnamese Phở to wake up your stomach.", transit: "15 mins Grab from hotel", budget: "100k VND (~220 PHP)", photo: null, dishes: "Raw Beef Pho, Veggie Pho (Phở Chay), Fried Dough Sticks" },
+                        { time: "11:00", title: "City Landmarks Tour", link: "https://www.google.com/maps/search/?api=1&query=Notre+Dame+Cathedral+of+Saigon", coords: [10.7798, 106.6990], desc: "Walk around Notre Dame Cathedral, Post Office, and Book Street.", transit: "10 mins walk", budget: "Free", photo: "Post Office interior arch, Book Street greenery", dishes: null },
+                        { time: "13:00", title: "Lunch: Nha Hang Ngon", link: "https://www.google.com/maps/search/?api=1&query=Nha+Hang+Ngon+Ho+Chi+Minh", coords: [10.7788, 106.6983], desc: "Beautiful colonial-style restaurant. Huge menu satisfying both meat lovers and vegetarians.", transit: "10 mins walk", budget: "250k VND (~550 PHP)", photo: null, dishes: "Bánh Xèo (Pancake), Fresh Spring Rolls, Lemongrass Skewers" },
+                        { time: "15:00", title: "The Cafe Apartments", link: "https://www.google.com/maps/search/?api=1&query=The+Cafe+Apartments+Ho+Chi+Minh", coords: [10.7745, 106.7046], desc: "Pick a cafe with a balcony to chill and take couple photos.", transit: "10 mins walk", budget: "80k VND (~180 PHP)", photo: "Balcony view overlooking Nguyen Hue street", dishes: "Coconut Coffee, Egg Coffee" },
+                        { time: "17:30", title: "Dinner: Secret Garden", link: "https://www.google.com/maps/search/?api=1&query=Secret+Garden+Restaurant+Ho+Chi+Minh", coords: [10.7766, 106.7013], desc: "Romantic rooftop restaurant with lanterns serving home-cooked Vietnamese dishes.", transit: "10 mins walk", budget: "300k VND (~680 PHP)", photo: "Lanterns at night", dishes: "Lemongrass Pork, Papaya Salad, Claypot Tofu" },
+                        { time: "18:30", title: "Water Puppet Show", link: "https://www.google.com/maps/search/?api=1&query=Golden+Dragon+Water+Puppet+Theatre", coords: [10.7766, 106.6923], desc: "50-min traditional performance. Great cultural ice-breaker.", transit: "15 mins Grab", budget: "350k VND (~790 PHP)", photo: "Puppets on water", dishes: null },
+                        { time: "20:00", title: "Vietnamese Hair Wash & Massage", link: "https://www.google.com/maps/search/?api=1&query=Miu+Miu+Spa+Ho+Chi+Minh", coords: [10.7770, 106.7040], desc: "Deep relaxation including hair wash, facial, and neck massage.", transit: "10 mins Grab", budget: "400k VND (~900 PHP)", photo: null, dishes: null }
+                    ],
+                    day2: [
+                        { time: "07:30", title: "Depart for Tay Ninh", link: null, coords: [10.7800, 106.6900], desc: "Take a 9-seater Limousine van. Sleep in the car.", transit: "2.5 hrs van ride", budget: "500k VND (~1130 PHP) for van split", photo: null, dishes: null },
+                        { time: "10:00", title: "Ba Den Mountain", link: "https://www.google.com/maps/search/?api=1&query=Sun+World+Ba+Den+Mountain", coords: [11.3780, 106.1663], desc: "Take the cable car to the peak. Highest mountain in Southern Vietnam.", transit: "Cable car up", budget: "400k VND (~900 PHP) ticket", photo: "Highest Guan Yin statue, Cloud sea & gardens", dishes: null },
+                        { time: "12:30", title: "Lunch: Van Nhat Buffet", link: "https://www.google.com/maps/search/?api=1&query=Sun+World+Ba+Den+Mountain", coords: [11.3780, 106.1663], desc: "Mountain-top buffet with meat section and a huge Cao Dai vegan section.", transit: "5 mins walk", budget: "250k VND (~550 PHP)", photo: null, dishes: "Grilled meats, Cao Dai vegan dishes, Local fruits" },
+                        { time: "14:30", title: "Cao Dai Temple", link: "https://www.google.com/maps/search/?api=1&query=Cao+Dai+Temple+Tay+Ninh", coords: [11.3122, 106.1264], desc: "Visit the colorful and magical headquarters of the Cao Dai religion.", transit: "30 mins van ride", budget: "Free", photo: "Colorful magic dome and pillars", dishes: null },
+                        { time: "19:00", title: "Dinner: Pizza 4P's", link: "https://www.google.com/maps/search/?api=1&query=Pizza+4P's+Ho+Chi+Minh", coords: [10.7734, 106.6968], desc: "Famous Japanese-Vietnamese fusion pizza. Must reserve in advance!", transit: "2.5 hrs van ride back", budget: "400k VND (~900 PHP)", photo: "Pizza oven & chic interior", dishes: "Burrata Parma Ham, 4-Cheese with Honey, Crab Pasta" }
+                    ],
+                    day3: [
+                        { time: "09:30", title: "Local Market Shopping", link: "https://www.google.com/maps/search/?api=1&query=Ben+Thanh+Market", coords: [10.7725, 106.6980], desc: "Ben Thanh Market for rattan bags/cashews, then Co.opmart for coffee beans.", transit: "10 mins Grab", budget: "500k VND (~1130 PHP) shopping", photo: "Ben Thanh South Gate Clock Tower", dishes: null },
+                        { time: "12:00", title: "Bánh Mì Showdown", link: "https://www.google.com/maps/search/?api=1&query=Banh+Mi+Huynh+Hoa", coords: [10.7719, 106.6917], desc: "Meat eaters: Huynh Hoa. Vegans: Order Banh Mi Chay via Grab.", transit: "5 mins walk", budget: "65k VND (~140 PHP)", photo: null, dishes: "Signature Mixed Meat Bread, Veggie Bread" },
+                        { time: "13:30", title: "Couple's Free Time", link: "https://www.google.com/maps/search/?api=1&query=Thao+Dien+Ho+Chi+Minh", coords: [10.8016, 106.7329], desc: "Split up! Recommend Dist. 2 Thao Dien (Little Europe) or War Museum.", transit: "20 mins Grab", budget: "300k VND (~680 PHP)", photo: "Thao Dien French alleys", dishes: null },
+                        { time: "18:30", title: "Dinner: Propaganda", link: "https://www.google.com/maps/search/?api=1&query=Propaganda+Vietnamese+Bistro", coords: [10.7787, 106.6976], desc: "Regroup! Trendy bistro with Vietnamese pop-art murals.", transit: "20 mins Grab", budget: "300k VND (~680 PHP)", photo: "Pop-art murals background", dishes: "Bún Thịt Nướng, Fried Spring Rolls, Veggie Mixed Rice" },
+                        { time: "20:30", title: "Rooftop Bar", link: "https://www.google.com/maps/search/?api=1&query=Social+Club+Rooftop+Ho+Chi+Minh", coords: [10.7797, 106.6971], desc: "Enjoy cocktails and the city skyline.", transit: "10 mins Grab", budget: "350k VND (~790 PHP)", photo: "Infinity view night skyline", dishes: null }
+                    ],
+                    day4: [
+                        { time: "10:30", title: "Tan Dinh Pink Church", link: "https://www.google.com/maps/search/?api=1&query=Tan+Dinh+Church", coords: [10.7885, 106.6895], desc: "Sleep in, then take romantic couple photos at the pink church.", transit: "10 mins Grab", budget: "Free", photo: "Front panorama, Side pink wall", dishes: null },
+                        { time: "12:00", title: "Hotel Check-out", link: null, coords: [10.7800, 106.6900], desc: "Check out and store luggage at the lobby.", transit: "10 mins Grab", budget: "N/A", photo: null, dishes: null },
+                        { time: "12:30", title: "Lunch: Den Long", link: "https://www.google.com/maps/search/?api=1&query=Den+Long+Home+Cooked+Vietnamese+Restaurant", coords: [10.7711, 106.6928], desc: "Comfortable environment for a final Vietnamese feast.", transit: "15 mins Grab", budget: "200k VND (~450 PHP)", photo: null, dishes: "Coconut Jelly, Garlic Butter Shrimp, Stir-fry" },
+                        { time: "14:30", title: "Deep Oil Massage", link: "https://www.google.com/maps/search/?api=1&query=Miu+Miu+Spa+Ho+Chi+Minh", coords: [10.7770, 106.7040], desc: "90-120 mins couple's oil massage to soothe tired muscles.", transit: "10 mins Grab", budget: "600k VND (~1360 PHP)", photo: null, dishes: null },
+                        { time: "17:00", title: "Maison Marou Chocolate", link: "https://www.google.com/maps/search/?api=1&query=Maison+Marou+Ho+Chi+Minh", coords: [10.7727, 106.6970], desc: "Premium Vietnamese chocolate afternoon tea.", transit: "5 mins walk", budget: "150k VND (~340 PHP)", photo: null, dishes: "Signature Iced Cocoa, Opera Cake, Macarons" },
+                        { time: "22:30", title: "Head to Airport", link: "https://www.google.com/maps/search/?api=1&query=Tan+Son+Nhat+International+Airport", coords: [10.8116, 106.6627], desc: "Grab luggage from hotel and head to SGN for the 01:25 AM flight.", transit: "30 mins Grab", budget: "150k VND (~340 PHP)", photo: null, dishes: null }
+                    ],
+                    tips: [
+                        { icon: "fa-passport", title: "Visa & Entry (PH Passport)", desc: "Visa-Free for 21 days. Passports must be valid for 6+ months. Keep Cebu Pacific return ticket screenshot ready. Fill out eTravel before leaving and returning to MNL." },
+                        { icon: "fa-money-bill-wave", title: "Currency & Budget", desc: "DO NOT exchange PHP in VN. Bring 100 USD bills from Manila and exchange at Ha Tam Jewelry (near Ben Thanh) for VND. Cards accepted at big restaurants; cash needed for Grab & markets." },
+                        { icon: "fa-car", title: "Grab & Transport", desc: "Download and register Grab in PH before flying. Link a credit card if possible. At 00:05 AM airport arrival, IGNORE touts. Book a 7-seater Grab directly." },
+                        { icon: "fa-leaf", title: "Vegetarian Needs", desc: "Look for 'Chay' (pronounced chai). It means vegetarian/vegan. Almost all street food has a 'Chay' version stall nearby." },
+                        { icon: "fa-shield-halved", title: "Safety Warning", desc: "Beware of phone snatching by motorbikes! NEVER hold your phone with one hand facing the street. Step inside a shop or hold it with two hands tightly." },
+                        { icon: "fa-sun", title: "Weather & Clothing (April)", desc: "April is one of the hottest months in HCMC (33-35°C+). Wear light, breathable clothing. Bring strong sun protection, hats, and an umbrella (for sun shade and occasional showers). Stay hydrated!" },
+                        { icon: "fa-van-shuttle", title: "Day 2 Van Booking", desc: "For the Tay Ninh day trip, book a 9-seater Limousine van 1-2 weeks in advance via Klook/KKday or ask your hotel to arrange it. You can also search 'Ho Chi Minh Private Car' on Facebook. Ensure they know it's for 6 pax to Ba Den Mountain." }
+                    ]
+                }
+            },
+            zh: {
+                header: {
+                    title: "胡志明四天三夜",
+                    subtitle: "青春浪漫高 CP 值之旅 (3對情侶 / 含蛋奶素)",
+                    meta: "住宿：第三郡 | 宿霧航空紅眼航班",
+                    langToggle: "English"
+                },
+                labels: {
+                    transit: "移動",
+                    budget: "預算",
+                    photo: "必拍",
+                    dishes: "推薦"
+                },
+                tabs: {
+                    day1: "第一天",
+                    day2: "第二天",
+                    day3: "第三天",
+                    day4: "第四天",
+                    tips: "注意事項"
+                },
+                mapTitle: "本日路線地圖",
+                content: {
+                    day1: [
+                        { time: "10:00", title: "Phở Hòa Pasteur 河粉", link: "https://www.google.com/maps/search/?api=1&query=Pho+Hoa+Pasteur+Ho+Chi+Minh", coords: [10.7915, 106.6896], desc: "用傳統越式河粉喚醒腸胃。", transit: "從飯店搭 Grab 15 分鐘", budget: "10萬 VND (~220 PHP)", photo: null, dishes: "生牛肉河粉, 素清湯河粉, 炸油條" },
+                        { time: "11:00", title: "市區法式經典地標", link: "https://www.google.com/maps/search/?api=1&query=Notre+Dame+Cathedral+of+Saigon", coords: [10.7798, 106.6990], desc: "散步參觀紅教堂、百年郵政局與書街。", transit: "步行 10 分鐘", budget: "免費", photo: "郵政局內部拱門, 書街綠色林蔭道", dishes: null },
+                        { time: "13:00", title: "午餐：Nhà Hàng Ngon (好吃館)", link: "https://www.google.com/maps/search/?api=1&query=Nha+Hang+Ngon+Ho+Chi+Minh", coords: [10.7788, 106.6983], desc: "殖民風情美店，菜單極豐富，一站滿足吃肉與吃素的需求。", transit: "步行 10 分鐘", budget: "25萬 VND (~550 PHP)", photo: null, dishes: "越式煎餅 (Bánh Xèo), 鮮蝦/素春捲, 香茅烤肉串" },
+                        { time: "15:00", title: "咖啡公寓 (The Cafe Apartments)", link: "https://www.google.com/maps/search/?api=1&query=The+Cafe+Apartments+Ho+Chi+Minh", coords: [10.7745, 106.7046], desc: "挑一間有陽台的咖啡店吹冷氣拍美照。", transit: "步行 10 分鐘", budget: "8萬 VND (~180 PHP)", photo: "陽台俯瞰步行街夜景", dishes: "椰奶咖啡, 蛋咖啡" },
+                        { time: "17:30", title: "晚餐：Secret Garden", link: "https://www.google.com/maps/search/?api=1&query=Secret+Garden+Restaurant+Ho+Chi+Minh", coords: [10.7766, 106.7013], desc: "隱身老公寓頂樓，燈籠氣氛極佳的浪漫越式家常菜。", transit: "步行 10 分鐘", budget: "30萬 VND (~680 PHP)", photo: "夜晚亮起的紅燈籠", dishes: "香茅烤豬肉, 涼拌青木瓜絲, 砂鍋燉豆腐" },
+                        { time: "18:30", title: "金龍水上木偶劇院", link: "https://www.google.com/maps/search/?api=1&query=Golden+Dragon+Water+Puppet+Theatre", coords: [10.7766, 106.6923], desc: "50 分鐘的傳統水上木偶劇，極佳的文化破冰體驗。", transit: "搭 Grab 15 分鐘", budget: "35萬 VND (~790 PHP)", photo: "水上木偶謝幕", dishes: null },
+                        { time: "20:00", title: "高 CP 值越式洗髮", link: "https://www.google.com/maps/search/?api=1&query=Miu+Miu+Spa+Ho+Chi+Minh", coords: [10.7770, 106.7040], desc: "極度放鬆，包含洗頭、洗臉敷臉與肩頸紓壓。", transit: "搭 Grab 10 分鐘", budget: "40萬 VND (~900 PHP)", photo: null, dishes: null }
+                    ],
+                    day2: [
+                        { time: "07:30", title: "包車出發前往西寧省", link: null, coords: [10.7800, 106.6900], desc: "六人包一台 9 人座豪華保母車，車上繼續補眠。", transit: "車程約 2.5 小時", budget: "車資均攤約 50萬 VND (~1130 PHP)", photo: null, dishes: null },
+                        { time: "10:00", title: "太陽世界黑婆山景區", link: "https://www.google.com/maps/search/?api=1&query=Sun+World+Ba+Den+Mountain", coords: [11.3780, 106.1663], desc: "搭乘纜車登頂南越第一高峰。", transit: "搭乘纜車上山", budget: "門票 40萬 VND (~900 PHP)", photo: "亞洲最高山頂觀音像, 壯麗雲海與花園", dishes: null },
+                        { time: "12:30", title: "午餐：Van Nhat 山頂自助吧", link: "https://www.google.com/maps/search/?api=1&query=Sun+World+Ba+Den+Mountain", coords: [11.3780, 106.1663], desc: "完美解決葷素需求，擁有極具規模的純素食專區。", transit: "步行 5 分鐘", budget: "25萬 VND (~550 PHP)", photo: null, dishes: "越式烤肉, 高台教純素料理, 在地水果" },
+                        { time: "14:30", title: "高台教聖座", link: "https://www.google.com/maps/search/?api=1&query=Cao+Dai+Temple+Tay+Ninh", coords: [11.3122, 106.1264], desc: "下山順遊，欣賞融合多種宗教的鮮豔奇特建築。", transit: "包車移動 30 分鐘", budget: "免費", photo: "繽紛魔幻的內部穹頂", dishes: null },
+                        { time: "19:00", title: "晚餐：Pizza 4P's (胡志明神級披薩)", link: "https://www.google.com/maps/search/?api=1&query=Pizza+4P's+Ho+Chi+Minh", coords: [10.7734, 106.6968], desc: "日越混血神級披薩，氣氛極佳！(務必提前訂位)", transit: "包車回程 2.5 小時", budget: "40萬 VND (~900 PHP)", photo: "絕美披薩窯爐與裝潢", dishes: "帕瑪火腿布拉塔起司, 四重起司淋蜂蜜, 蟹肉義大利麵" }
+                    ],
+                    day3: [
+                        { time: "09:30", title: "在地採買大作戰", link: "https://www.google.com/maps/search/?api=1&query=Ben+Thanh+Market", coords: [10.7725, 106.6980], desc: "濱城市場買藤編包/腰果；Co.opmart 超市買咖啡豆/零食。", transit: "搭 Grab 10 分鐘", budget: "採買金約 50萬 VND (~1130 PHP)", photo: "濱城市場南門鐘塔", dishes: null },
+                        { time: "12:00", title: "Bánh Mì 法國麵包對決", link: "https://www.google.com/maps/search/?api=1&query=Banh+Mi+Huynh+Hoa", coords: [10.7719, 106.6917], desc: "葷食組買 Huỳnh Hoa；蛋奶素組透過 Grab 點 Bánh Mì Chay。", transit: "步行 5 分鐘", budget: "6.5萬 VND (~140 PHP)", photo: null, dishes: "招牌綜合肉法國麵包, 素食法國麵包" },
+                        { time: "13:30", title: "💘 情侶自由放風時間", link: "https://www.google.com/maps/search/?api=1&query=Thao+Dien+Ho+Chi+Minh", coords: [10.8016, 106.7329], desc: "三對情侶各自約會！推薦去第二郡塔田區 (小歐洲) 或戰爭博物館。", transit: "搭 Grab 20 分鐘", budget: "30萬 VND (~680 PHP)", photo: "第二郡法式巷弄與咖啡廳", dishes: null },
+                        { time: "18:30", title: "晚餐：Propaganda", link: "https://www.google.com/maps/search/?api=1&query=Propaganda+Vietnamese+Bistro", coords: [10.7787, 106.6976], desc: "越式普普風壁畫餐廳，氣氛佳，葷素皆有水準。", transit: "搭 Grab 20 分鐘", budget: "30萬 VND (~680 PHP)", photo: "普普風壁畫背景", dishes: "越式烤肉米線, 炸春捲, 越式拌飯" },
+                        { time: "20:30", title: "高空微醺之夜", link: "https://www.google.com/maps/search/?api=1&query=Social+Club+Rooftop+Ho+Chi+Minh", coords: [10.7797, 106.6971], desc: "Rooftop Bar 點杯調酒，享受繁華夜景。", transit: "搭 Grab 10 分鐘", budget: "35萬 VND (~790 PHP)", photo: "頂樓無邊際夜景", dishes: null }
+                    ],
+                    day4: [
+                        { time: "10:30", title: "粉紅教堂浪漫合影", link: "https://www.google.com/maps/search/?api=1&query=Tan+Dinh+Church", coords: [10.7885, 106.6895], desc: "睡飽後前往新定教堂，拍下此行最亮眼的情侶合照。", transit: "搭 Grab 10 分鐘", budget: "免費", photo: "教堂正面全景, 側邊粉紅牆", dishes: null },
+                        { time: "12:00", title: "飯店退房", link: null, coords: [10.7800, 106.6900], desc: "將行李寄放於大廳，輕裝度過最後一天。", transit: "搭 Grab 10 分鐘", budget: "無", photo: null, dishes: null },
+                        { time: "12:30", title: "午餐：Den Long", link: "https://www.google.com/maps/search/?api=1&query=Den+Long+Home+Cooked+Vietnamese+Restaurant", coords: [10.7711, 106.6928], desc: "高評價越式家常菜，享受最後一頓豐盛的告別餐。", transit: "搭 Grab 15 分鐘", budget: "20萬 VND (~450 PHP)", photo: null, dishes: "椰子果凍, 蒜香奶油蝦, 家常炒熱菜" },
+                        { time: "14:30", title: "全身精油按摩", link: "https://www.google.com/maps/search/?api=1&query=Miu+Miu+Spa+Ho+Chi+Minh", coords: [10.7770, 106.7040], desc: "預約 90-120 分鐘雙人精油按摩，徹底舒緩四天疲憊。", transit: "搭 Grab 10 分鐘", budget: "60萬 VND (~1360 PHP)", photo: null, dishes: null },
+                        { time: "17:00", title: "頂級巧克力下午茶", link: "https://www.google.com/maps/search/?api=1&query=Maison+Marou+Ho+Chi+Minh", coords: [10.7727, 106.6970], desc: "Maison Marou 旗艦店喝冰可可、吃蛋糕。", transit: "步行 5 分鐘", budget: "15萬 VND (~340 PHP)", photo: null, dishes: "招牌冰可可, 歌劇院蛋糕, 馬卡龍" },
+                        { time: "22:30", title: "前往機場返程", link: "https://www.google.com/maps/search/?api=1&query=Tan+Son+Nhat+International+Airport", coords: [10.8116, 106.6627], desc: "拿行李搭 Grab 到機場，準備搭乘 01:25 班機回馬尼拉。", transit: "搭 Grab 30 分鐘", budget: "15萬 VND (~340 PHP)", photo: null, dishes: null }
+                    ],
+                    tips: [
+                        { icon: "fa-passport", title: "簽證與出入境 (菲律賓護照)", desc: "享 21 天免簽。護照效期需 6 個月以上。海關可能查驗回程機票，請截圖備用。離開與返回馬尼拉前需填寫 eTravel 申報表。" },
+                        { icon: "fa-money-bill-wave", title: "換匯與消費", desc: "大忌：不要帶披索(PHP)去越南換。請在馬尼拉先換好百元美金大鈔 (USD)，抵達後去濱城市場旁的銀樓 (Ha Tam) 換越南盾 (VND) 匯率最佳。" },
+                        { icon: "fa-car", title: "交通與叫車 (紅眼航班必備)", desc: "出發前先下載並註冊 Grab App (綁定信用卡)。凌晨抵達機場時，堅決不要理會大廳拉客的無牌計程車，請直接用 Grab 叫 7 人座。" },
+                        { icon: "fa-leaf", title: "飲食與素食", desc: "素食的越文是 Chay (發音：家-伊)。看到這字就代表無肉。幾乎所有小吃都有 Chay 版本可選擇。" },
+                        { icon: "fa-shield-halved", title: "安全防範", desc: "防飛車搶劫：在馬路邊看手機導航時，絕對不要單手拿著朝向車道！請往騎樓站，或雙手拿緊。側背包請掛在身體前方。" },
+                        { icon: "fa-sun", title: "四月天氣與穿著建議", desc: "四月是胡志明市最熱的月份之一 (白天常達 33-35°C 以上)。建議穿著棉麻透氣衣物，務必做好防曬 (太陽眼鏡、帽子、防曬乳)，並隨身攜帶晴雨傘遮陽或應付午後陣雨。隨時補充水分！" },
+                        { icon: "fa-van-shuttle", title: "Day 2 西寧包車預約建議", desc: "前往黑婆山建議提前 1-2 週預訂 9 人座豪華保母車 (Limousine Dcar)。最方便是透過 Klook/KKday 預訂，或請飯店櫃檯代訂。亦可在 FB 搜尋「越南包車」社團詢問報價。務必告知人數 (6人) 及目的地 (Sun World Ba Den Mountain)。" }
+                    ]
+                }
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            renderApp();
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            renderTabs();
+            
+            const contentContainer = document.getElementById('content-container');
+            contentContainer.classList.remove('fade-in');
+            void contentContainer.offsetWidth; // Trigger reflow
+            contentContainer.classList.add('fade-in');
+            
+            renderContent();
+            updateMap();
+        }
+
+        function renderApp() {
+            const data = i18n[currentLang];
+            
+            // Header
+            document.getElementById('header-title').innerHTML = `<i class="fa-solid fa-plane-departure mr-2"></i>${data.header.title}`;
+            document.getElementById('header-subtitle').innerText = data.header.subtitle;
+            document.getElementById('header-meta').innerHTML = `<i class="fa-solid fa-bed mr-1"></i>${data.header.meta}`;
+            document.getElementById('lang-text').innerText = data.header.langToggle;
+
+            renderTabs();
+            renderContent();
+        }
+
+        function renderTabs() {
+            const data = i18n[currentLang];
+            const tabsContainer = document.getElementById('tabs-container');
+            const tabKeys = ['day1', 'day2', 'day3', 'day4', 'tips'];
+            
+            let tabsHTML = '';
+            tabKeys.forEach(key => {
+                const isActive = currentTab === key;
+                const activeClass = isActive ? 'text-teal-600 border-teal-600 bg-teal-50/50' : 'text-gray-500 border-transparent hover:bg-slate-50';
+                const icon = key === 'tips' ? 'fa-solid fa-circle-info' : 'fa-regular fa-calendar-days';
+                
+                tabsHTML += `
+                    <button onclick="switchTab('${key}')" class="flex-none py-3.5 px-5 font-semibold border-b-4 transition-colors whitespace-nowrap ${activeClass}">
+                        <i class="${icon} mr-2"></i>${data.tabs[key]}
+                    </button>
+                `;
+            });
+            tabsContainer.innerHTML = tabsHTML;
+        }
+        
+        function updateMap() {
+            const data = i18n[currentLang];
+            const contentData = data.content[currentTab];
+            const mapWrapper = document.getElementById('map-wrapper');
+            
+            if (currentTab === 'tips') {
+                mapWrapper.style.display = 'none'; // 強制隱藏
+                return;
+            }
+            
+            // 強制顯示並移除 hidden class，確保容器有正確的寬高
+            mapWrapper.style.display = 'block';
+            mapWrapper.classList.remove('hidden');
+            document.getElementById('map-title-text').innerText = data.mapTitle;
+
+            // Initialize map if it doesn't exist
+            if (!map) {
+                map = L.map('itinerary-map', { scrollWheelZoom: false }).setView([10.7769, 106.7009], 13);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(map);
+            }
+
+            // 使用 setTimeout 確保瀏覽器已完成 DOM 渲染，再要求地圖重新計算尺寸
+            setTimeout(() => {
+                map.invalidateSize();
+                
+                // Remove existing route/markers
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                }
+
+                const points = [];
+                const markers = [];
+                
+                // Loop through day's events to plot markers and polyline
+                contentData.forEach((event, index) => {
+                    // 過濾掉沒有座標的點（例如純粹的交通移動）
+                    if (event.coords) {
+                        points.push(event.coords);
+                        
+                        // 建立點擊後彈出視窗 (Popup) 的 HTML 內容
+                        const popupContent = `
+                            <div class="min-w-[180px] font-sans">
+                                <div class="inline-block bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded text-xs font-bold mb-1.5">${event.time}</div>
+                                <div class="font-bold text-sm text-slate-800 leading-tight mb-1.5">${index + 1}. ${event.title}</div>
+                                <p class="text-xs text-slate-600 mt-1 mb-2.5 leading-relaxed">${event.desc}</p>
+                                ${event.link ? `<a href="${event.link}" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank'); return false;" class="text-blue-500 text-xs hover:text-blue-700 flex items-center font-semibold cursor-pointer"><i class="fa-solid fa-map-location-dot mr-1"></i> Map</a>` : ''}
+                            </div>
+                        `;
+                        
+                        const marker = L.circleMarker(event.coords, {
+                            radius: window.innerWidth < 768 ? 6 : 8,
+                            fillColor: "#0f766e", // Tailwind teal-700
+                            color: "#ffffff",
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 1
+                        }).bindTooltip(`<b>${index + 1}. ${event.title}</b>`, { 
+                            permanent: false, 
+                            direction: 'top',
+                            className: 'bg-white shadow-lg text-sm rounded-md border-0 p-2'
+                        }).bindPopup(popupContent, {
+                            maxWidth: 260
+                        });
+                        markers.push(marker);
+                    }
+                });
+
+                if (points.length > 0) {
+                    // Draw connecting line
+                    const polyline = L.polyline(points, {
+                        color: '#2dd4bf', // Tailwind teal-400
+                        weight: 3, 
+                        dashArray: '5, 8' 
+                    });
+                    
+                    routeLayer = L.featureGroup([polyline, ...markers]).addTo(map);
+                    
+                    // 確保地圖視角自動縮放以包含所有標記點
+                    map.fitBounds(routeLayer.getBounds(), { padding: [40, 40], maxZoom: 15 });
+                }
+            }, 100);
+        }
+
+        function renderContent() {
+            const data = i18n[currentLang];
+            const contentData = data.content[currentTab];
+            const container = document.getElementById('content-container');
+            const labels = data.labels;
+
+            let html = '';
+
+            if (currentTab === 'tips') {
+                html += '<div class="space-y-4">';
+                contentData.forEach(tip => {
+                    html += `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h3 class="text-lg font-bold text-teal-700 border-b border-slate-100 pb-2 mb-3 flex items-center">
+                                <i class="fa-solid ${tip.icon} mr-2.5 w-5 text-center"></i>${tip.title}
+                            </h3>
+                            <p class="text-sm text-slate-700 leading-relaxed">${tip.desc}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            } else {
+                html += '<div class="py-2">';
+                contentData.forEach((event, index) => {
+                    const isLast = index === contentData.length - 1;
+                    
+                    html += `
+                        <div class="flex mb-4 relative">
+                            <div class="w-16 flex flex-col items-center flex-shrink-0">
+                                <div class="text-sm font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded-md shadow-sm">${event.time}</div>
+                                ${!isLast ? '<div class="h-full w-0.5 bg-teal-200 mt-2 rounded-full"></div>' : ''}
+                            </div>
+                            <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 ml-3 mb-2 hover:shadow-md transition-shadow">
+                                <h3 class="font-bold text-lg text-slate-800 flex items-start justify-between">
+                                    <span>${event.title}</span>
+                                    ${event.link ? `<a href="${event.link}" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank'); return false;" class="text-blue-500 hover:text-blue-700 flex-shrink-0 ml-2 cursor-pointer"><i class="fa-solid fa-map-location-dot"></i></a>` : ''}
+                                </h3>
+                                <p class="text-sm text-slate-600 mt-2 mb-4 leading-relaxed">${event.desc}</p>
+                                
+                                <div class="space-y-2 bg-slate-50 p-3.5 rounded-lg text-sm border border-slate-100">
+                                    ${event.transit ? `
+                                        <div class="flex items-start">
+                                            <i class="fa-solid fa-person-walking-luggage w-5 text-slate-400 mt-0.5"></i>
+                                            <span class="text-slate-700"><span class="font-semibold mr-1">${labels.transit}:</span>${event.transit}</span>
+                                        </div>` : ''}
+                                    ${event.budget ? `
+                                        <div class="flex items-start">
+                                            <i class="fa-solid fa-wallet w-5 text-emerald-500 mt-0.5"></i>
+                                            <span class="text-slate-700"><span class="font-semibold text-emerald-700 mr-1">${labels.budget}:</span>${event.budget}</span>
+                                        </div>` : ''}
+                                    ${event.photo ? `
+                                        <div class="flex items-start">
+                                            <i class="fa-solid fa-camera w-5 text-pink-500 mt-0.5"></i>
+                                            <span class="text-slate-700"><span class="font-semibold text-pink-600 mr-1">${labels.photo}:</span>${event.photo}</span>
+                                        </div>` : ''}
+                                    ${event.dishes ? `
+                                        <div class="flex items-start">
+                                            <i class="fa-solid fa-utensils w-5 text-orange-500 mt-0.5"></i>
+                                            <span class="text-slate-700"><span class="font-semibold text-orange-600 mr-1">${labels.dishes}:</span>${event.dishes}</span>
+                                        </div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        window.onload = () => {
+            renderApp();
+            updateMap(); // Initial map load
+        };
+    </script>
+</body>
+</html>
